@@ -1,0 +1,53 @@
+/target
+/target/**
+/target/debug
+/target/release
+/crates/*/target
+/crates/*/target/
+
+/**.rlib
+/crates/**/*.rlib
+/crates/**/*.so
+
+/crates/**/Cargo.lock
+
+/.cargo_home
+
+/go.sum
+/go.mod
+
+*.rsx
+*.o
+*.a
+*.exe
+*.dylib
+*.so
+
+**/*.pem
+**/*.key
+**/*.crt
+
+**/.env
+
+**/node_modules
+**/target/
+**/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Binary release archives
+*.tar.gz
+*.zip
+
+# OTEL
+/opentelemetry
+
+# SQLx cache
+/sqlx
+
+# Protocols
+*.proto
