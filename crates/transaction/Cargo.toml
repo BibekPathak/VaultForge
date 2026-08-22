@@ -1,0 +1,15 @@
+[package]
+name = "vaultforge-transaction"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vaultforge-crypto = { path = "../crypto" }
+vaultforge-solana = { path = "../solana" }
+vaultforge-types = { path = "../types" }
+serde = { version = "1", features = ["derive"] }
+log = "0.4"
+thiserror = "1"
+zeroize = "1"
+solana-program = "2.0"
+solana-client = "2.0"
