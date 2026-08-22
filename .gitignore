@@ -1,53 +1,55 @@
+# Ignore all Rust target directories at every level
+# These are build artifacts that should never be committed
 /target
-/target/**
+/target/
 /target/debug
 /target/release
-/crates/*/target
-/crates/*/target/
 
-/**.rlib
-/crates/**/*.rlib
-/crates/**/*.so
+# Ignore Cargo.lock at root level only (not in crates/)
+/Cargo.lock
 
-/crates/**/Cargo.lock
+# Ignore Cargo.lock in crates/ if it exists (some may have their own)
+/crates/*/Cargo.lock
 
-/.cargo_home
+# Do NOT ignore .cargo_home at root - it's config, not build art
+# /.cargo_home
 
-/go.sum
-/go.mod
-
-*.rsx
-*.o
-*.a
-*.exe
-*.dylib
-*.so
-
-**/*.pem
-**/*.key
-**/*.crt
-
-**/.env
-
+# Ignore node_modules and dist at root
 **/node_modules
-**/target/
 **/dist/
 
-# IDE
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Binary release archives
+# Binary releases
 *.tar.gz
 *.zip
+
+# Environment files (never commit secrets)
+**.env
 
 # OTEL
 /opentelemetry
 
-# SQLx cache
-/sqlx
-
 # Protocols
 *.proto
+
+# Raw intermediate files
+**.rlib
+**.so
+
+# Crate-specific Cargo.lock (only at root, not in subdirs)
+# /crates/  crates may have their own Cargo.lock if they're standalone
+
+# Target directories at every crate level
+/crates/**/target
+
+# Explicitly exclude crates/solana/target
+/crates/solana/target
+
+# But keep these documented:
+# - /target at root (cargo root)
+# - /crates/*/target at each crate level
