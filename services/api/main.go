@@ -83,10 +83,16 @@ func main() {
 	txStore := core.NewPostgresTransactionStore(db)
 	healthChecker := core.NewHealthChecker(db)
 
+	// Initialize rate limiter (100 req/s per tenant, burst of 200)
+	rateLimiter := core.NewRateLimiter(100, 200)
+
 	// Create HTTP router
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(routes.CORSMiddleware())
 	r.Use(routes.RequestIDMiddleware())
+	r.Use(routes.TimeoutMiddleware(30 * time.Second))
+	r.Use(routes.RateLimitMiddleware(rateLimiter))
 	r.Use(routes.MetricsMiddleware(metrics))
 	r.Use(routes.LoggingMiddleware(logger))
 	r.Use(routes.AuthMiddleware())
