@@ -28,6 +28,9 @@
 *.tar.gz
 *.zip
 
+# Built binaries
+vaultforge-api
+
 # Environment files (never commit secrets)
 **.env
 
