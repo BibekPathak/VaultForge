@@ -9,3 +9,5 @@ serde = { version = "1", features = ["derive"] }
 zeroize = "1"
 log = "0.4"
 thiserror = "1"
+sha2 = "0.10"
+rand = "0.8"

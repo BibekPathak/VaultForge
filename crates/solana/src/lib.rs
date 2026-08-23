@@ -214,7 +214,7 @@ mod tests {
             "merchant_1".to_string(), 1000);
         let tx_bytes = builder.build();
         assert!(!tx_bytes.is_empty());
-        assert_eq!(tx_bytes[0], 0u8); // SOL transfer type
+        assert_eq!(tx_bytes[32], 0u8); // SOL transfer type at byte 32 (after 32-byte intent ID)
     }
     
     #[test]
@@ -224,7 +224,7 @@ mod tests {
             "merchant_1".to_string(), 1000);
         let tx_bytes = builder.build();
         assert!(!tx_bytes.is_empty());
-        assert_eq!(tx_bytes[0], 1u8); // Token transfer type
+        assert_eq!(tx_bytes[32], 1u8); // Token transfer type at byte 32 (after 32-byte intent ID)
     }
     
     #[test]

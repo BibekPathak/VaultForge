@@ -41,13 +41,21 @@ type PolicyResult struct {
 	Reason string `json:"reason,omitempty"`
 }
 
-// Wallet struct
-type Wallet struct {
+// Tenant represents an institution/user group
+type Tenant struct {
 	ID        string `json:"id"`
-	TenantID  string `json:"tenant_id"`
 	Name      string `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
-	Status    string `json:"status"`
+}
+
+// Wallet struct
+type Wallet struct {
+	ID            string `json:"id"`
+	TenantID      string `json:"tenant_id"`
+	Name          string `json:"name"`
+	DailyLimit    int64  `json:"daily_limit"`
+	Status        string `json:"status"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 // Transaction struct
