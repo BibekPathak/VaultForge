@@ -82,3 +82,31 @@ type SimulationResult struct {
 	TransactionHash string
 	Error           string
 }
+
+// IntentAuditor records audit events for intent lifecycle transitions.
+type IntentAuditor interface {
+	LogIntentCreated(tenantID, actor, intentID, requestID string)
+	LogIntentApproved(tenantID, actor, intentID, requestID string, policyResult *PolicyResult)
+	LogIntentRejected(tenantID, actor, intentID, requestID string)
+	LogIntentExecuted(tenantID, actor, intentID, requestID string)
+	LogIntentExpired(tenantID, actor, intentID, requestID string)
+	LogIntentSigned(tenantID, actor, intentID, requestID string, participants []uint32)
+	LogIntentSubmittedOnChain(tenantID, actor, intentID, requestID, txSignature string)
+	LogIntentSimulated(tenantID, actor, intentID, requestID string, allowed bool)
+	LogIntentPolicyDenied(tenantID, actor, intentID, requestID, reason string)
+	LogIntentZKDenied(tenantID, actor, intentID, requestID string)
+	LogIntentFailed(tenantID, actor, intentID, requestID, reason, failureType string)
+}
+
+// SolanaSubmitter submits transactions to Solana and polls for confirmation.
+type SolanaSubmitter interface {
+	SubmitTransaction(txBytes []byte) (*SubmitResult, error)
+	WaitForConfirmation(signature string) (bool, error)
+	GetRecentBlockhash() (string, error)
+}
+
+// StateNotifier sends notifications on state changes.
+type StateNotifier interface {
+	NotifyIntentStateChange(intent *Intent, eventType string)
+	NotifyTransactionConfirmed(tx *Transaction)
+}

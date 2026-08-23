@@ -15,9 +15,9 @@ type IntentHandler struct {
 	zkVerifier   core.ZKVerifier
 	mpcSigner    core.MPCSigner
 	reconciler   core.Reconciler
-	audit        *core.AuditLogger
-	solana       *core.SolanaClient
-	webhooks     *core.WebhookNotifier
+	audit        core.IntentAuditor
+	solana       core.SolanaSubmitter
+	webhooks     core.StateNotifier
 	txStore      core.TransactionStore
 }
 
@@ -27,9 +27,9 @@ func NewIntentHandler(
 	zkVerifier core.ZKVerifier,
 	mpcSigner core.MPCSigner,
 	reconciler core.Reconciler,
-	audit *core.AuditLogger,
-	solana *core.SolanaClient,
-	webhooks *core.WebhookNotifier,
+	audit core.IntentAuditor,
+	solana core.SolanaSubmitter,
+	webhooks core.StateNotifier,
 	txStore core.TransactionStore,
 ) *IntentHandler {
 	return &IntentHandler{
