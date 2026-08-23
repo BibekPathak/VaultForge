@@ -1,4 +1,4 @@
-.PHONY: build test lint docker clean help
+.PHONY: build test lint docker deploy clean help
 
 # Go API
 GO_API_DIR := ./services/api
@@ -7,13 +7,16 @@ GO_BINARY := vaultforge-api
 # Rust crates
 CRATES := crypto mpc zk policy types transaction solana
 
+# Solana program
+PROGRAM_NAME := vault_policy
+
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 # ── Build ──────────────────────────────────────────────
 
-build: build-go ## Build all binaries
+build: build-go build-solana ## Build all binaries
 
 build-go: ## Build Go API binary
 	cd $(GO_API_DIR) && go build -o ../$(GO_BINARY) .
@@ -24,6 +27,10 @@ build-rust: ## Build all Rust crates
 		echo "Building $$crate..."; \
 		cd crates/$$crate && cargo build && cd ../..; \
 	done
+
+build-solana: ## Build Solana program
+	anchor build
+	@echo "Built: $(PROGRAM_NAME)"
 
 # ── Test ───────────────────────────────────────────────
 
@@ -37,6 +44,11 @@ test-rust: ## Run all Rust crate tests
 		echo "=== Testing $$crate ==="; \
 		cd crates/$$crate && cargo test && cd ../..; \
 	done
+
+test-integration: ## Run integration tests
+	./scripts/run-integration-tests.sh
+
+test-all: test-go test-rust test-integration ## Run all tests including integration
 
 # ── Lint ───────────────────────────────────────────────
 
@@ -75,6 +87,14 @@ docker-down: ## Stop services with docker-compose
 docker-logs: ## View docker-compose logs
 	cd docker && docker compose logs -f
 
+# ── Deploy ─────────────────────────────────────────────
+
+deploy-devnet: build-solana ## Deploy program to Solana devnet
+	./scripts/deploy-devnet.sh
+
+create-wallets: ## Create test wallets for devnet
+	./scripts/create-test-wallets.sh
+
 # ── Clean ──────────────────────────────────────────────
 
 clean: ## Remove build artifacts
@@ -82,4 +102,5 @@ clean: ## Remove build artifacts
 	@for crate in $(CRATES); do \
 		cd crates/$$crate && cargo clean && cd ../..; \
 	done
+	anchor clean 2>/dev/null || true
 	@echo "Cleaned all build artifacts"
