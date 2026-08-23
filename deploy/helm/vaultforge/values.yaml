@@ -1,0 +1,101 @@
+replicaCount: 2
+
+image:
+  repository: vaultforge/api
+  tag: "0.13.0"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: vaultforge-api
+  annotations: {}
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "30"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+  hosts:
+    - host: api.vaultforge.io
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: vaultforge-tls
+      hosts:
+        - api.vaultforge.io
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+env:
+  VAULTFORGE_ENV: production
+  PORT: "8080"
+  SOLANA_RPC_URL: "https://api.devnet.solana.com"
+  SOLANA_WS_URL: "wss://api.devnet.solana.com"
+
+secrets:
+  DATABASE_URL: ""
+  JWT_SECRET: ""
+  WEBHOOK_SECRET: ""
+
+postgresql:
+  enabled: true
+  auth:
+    username: vaultforge
+    password: ""
+    database: vaultforge
+  primary:
+    persistence:
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

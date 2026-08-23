@@ -68,11 +68,31 @@ func (h *IntentHandler) CreateIntent(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, errorResponse{Error: err.Error()})
 		return
 	}
+
+	// Validate input fields
+	if errs := core.ValidateIntentInput(input.WalletID, input.Destination, input.Token, input.Chain, input.Creator, input.Amount); len(errs) > 0 {
+		c.JSON(http.StatusBadRequest, errorResponse{Error: errs[0]})
+		return
+	}
+
 	tenantID := c.MustGet("tenant_id").(string)
 	requestID := c.GetHeader("X-Request-ID")
 	if requestID == "" {
 		requestID = core.GenerateRequestID()
 	}
+
+	// Idempotency: if X-Idempotency-Key header is present, check for existing intent
+	idempotencyKey := c.GetHeader("X-Idempotency-Key")
+	if idempotencyKey != "" {
+		existing, _ := h.store.ListByTenant(tenantID, "")
+		for _, e := range existing {
+			if e.Creator == input.Creator && e.Destination == input.Destination && e.Amount == core.AmountToString(input.Amount) && e.Token == input.Token {
+				c.JSON(http.StatusConflict, errorResponse{Error: "duplicate intent detected"})
+				return
+			}
+		}
+	}
+
 	intent := core.NewIntent(tenantID, input.WalletID, input.Destination, input.Token, input.Chain, input.Creator, input.Amount)
 	if err := h.store.Create(intent); err != nil {
 		c.JSON(http.StatusInternalServerError, errorResponse{Error: "failed to create intent"})

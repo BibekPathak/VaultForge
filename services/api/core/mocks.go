@@ -262,6 +262,7 @@ func (m *MockAuditLogger) LogIntentApproved(tenant, actor, intentID, requestID s
 func (m *MockAuditLogger) LogIntentRejected(tenant, actor, intentID, requestID string)   {}
 func (m *MockAuditLogger) LogIntentExecuted(tenant, actor, intentID, requestID string)   {}
 func (m *MockAuditLogger) LogIntentExpired(tenant, actor, intentID, requestID string)    {}
+func (m *MockAuditLogger) LogIntentConfirmed(tenant, actor, intentID, requestID string)  {}
 func (m *MockAuditLogger) LogIntentSigned(tenant, actor, intentID, requestID string, participants []uint32) {}
 func (m *MockAuditLogger) LogIntentSubmittedOnChain(tenant, actor, intentID, requestID, txSig string) {}
 func (m *MockAuditLogger) LogIntentSimulated(tenant, actor, intentID, requestID string, allowed bool) {}

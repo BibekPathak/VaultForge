@@ -210,6 +210,11 @@ func ComputeIntentHash(intent *Intent) []byte {
 	return h.Sum(nil)
 }
 
+// AmountToString converts an int64 amount to its string representation.
+func AmountToString(amount int64) string {
+	return fmt.Sprintf("%d", amount)
+}
+
 func generateNonce() string {
 	return fmt.Sprintf("nonce-%d", time.Now().UnixNano())
 }

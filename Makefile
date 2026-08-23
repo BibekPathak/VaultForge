@@ -95,6 +95,20 @@ deploy-devnet: build-solana ## Deploy program to Solana devnet
 create-wallets: ## Create test wallets for devnet
 	./scripts/create-test-wallets.sh
 
+# ── Operations ──────────────────────────────────────────
+
+security-scan: ## Run security audit (cargo-audit + gosec)
+	./scripts/security-scan.sh
+
+helm-template: ## Render Helm templates locally
+	helm template vaultforge deploy/helm/vaultforge
+
+helm-lint: ## Lint Helm chart
+	helm lint deploy/helm/vaultforge
+
+seed-db: ## Seed database with test data
+	./scripts/seed-db.sh
+
 # ── Clean ──────────────────────────────────────────────
 
 clean: ## Remove build artifacts

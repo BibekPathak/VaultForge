@@ -1,0 +1,55 @@
+[Unit]
+Description=VaultForge API Server
+Documentation=https://vaultforge.io/docs
+After=network-online.target postgresql.service
+Wants=network-online.target
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=vaultforge
+Group=vaultforge
+WorkingDirectory=/opt/vaultforge
+
+ExecStartPre=/usr/bin/test -f /etc/vaultforge/.env
+ExecStart=/opt/vaultforge/vaultforge-api
+
+Restart=on-failure
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/vaultforge /run/vaultforge
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+MemoryDenyWriteExecute=true
+LockPersonality=true
+RestrictRealtime=true
+
+# Environment
+Environment=VAULTFORGE_ENV=production
+EnvironmentFile=/etc/vaultforge/.env
+
+# Limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vaultforge
+
+# Watchdog
+WatchdogSec=30
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

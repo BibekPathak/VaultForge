@@ -84,6 +84,11 @@ func main() {
 	txStore := core.NewPostgresTransactionStore(db)
 	healthChecker := core.NewHealthChecker(db, solanaClient)
 
+	// Wire reconciler dependencies
+	reconciler.SetSolanaClient(solanaClient)
+	reconciler.SetWebhookNotifier(webhooks)
+	reconciler.SetAuditLogger(audit)
+
 	// Initialize rate limiter (100 req/s per tenant, burst of 200)
 	rateLimiter := core.NewRateLimiter(100, 200)
 

@@ -1,0 +1,14 @@
+# VaultForge API log rotation
+/var/log/vaultforge/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 0640 vaultforge vaultforge
+    sharedscripts
+    postrotate
+        /usr/bin/systemctl reload vaultforge-api > /dev/null 2>&1 || true
+    endscript
+}

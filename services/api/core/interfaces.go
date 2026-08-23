@@ -90,6 +90,7 @@ type IntentAuditor interface {
 	LogIntentRejected(tenantID, actor, intentID, requestID string)
 	LogIntentExecuted(tenantID, actor, intentID, requestID string)
 	LogIntentExpired(tenantID, actor, intentID, requestID string)
+	LogIntentConfirmed(tenantID, actor, intentID, requestID string)
 	LogIntentSigned(tenantID, actor, intentID, requestID string, participants []uint32)
 	LogIntentSubmittedOnChain(tenantID, actor, intentID, requestID, txSignature string)
 	LogIntentSimulated(tenantID, actor, intentID, requestID string, allowed bool)

@@ -1,0 +1,579 @@
+openapi: 3.0.3
+info:
+  title: VaultForge API
+  description: |
+    Solana-native institutional treasury and settlement platform.
+    Provides MPC threshold custody, policy enforcement, ZK verification,
+    and full auditability for digital asset operations.
+  version: 0.13.0
+  contact:
+    name: VaultForge Team
+    email: team@vaultforge.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://api.vaultforge.io
+    description: Production
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Intents
+    description: Treasury intent lifecycle management
+  - name: Wallets
+    description: Wallet operations
+  - name: Transactions
+    description: Transaction records
+  - name: Audit
+    description: Audit event log
+  - name: Health
+    description: Service health and readiness
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT or API key in Authorization header
+
+  schemas:
+    Intent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        tenant_id:
+          type: string
+          example: "tenant-1"
+        wallet_id:
+          type: string
+          example: "wallet-1"
+        destination:
+          type: string
+          description: Solana base58 address
+          example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        token:
+          type: string
+          enum: [SOL, USDC, USDT]
+          example: "USDC"
+        amount:
+          type: string
+          description: Amount in smallest unit (lamports / base units)
+          example: "25000"
+        chain:
+          type: string
+          enum: [solana]
+          example: "solana"
+        nonce:
+          type: string
+          example: "nonce-abc123"
+        creator:
+          type: string
+          example: "alice@acme.com"
+        status:
+          type: string
+          enum: [draft, pending, policy_approved, zk_verified, signed, submitted, confirmed, executing, executed, failed, rejected, cancelled, expired]
+          example: "draft"
+        policy_version:
+          type: string
+          example: "v1"
+        expiry:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PolicyResult:
+      type: object
+      properties:
+        approved:
+          type: boolean
+        rules_passed:
+          type: integer
+        rules_total:
+          type: integer
+        reason:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        request_id:
+          type: string
+
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        name:
+          type: string
+        daily_limit:
+          type: string
+        status:
+          type: string
+          enum: [active, suspended, closed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TransactionRecord:
+      type: object
+      properties:
+        id:
+          type: string
+        intent_id:
+          type: string
+        wallet_id:
+          type: string
+        tx_type:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        tenant_id:
+          type: string
+        intent_id:
+          type: string
+        event_type:
+          type: string
+        actor:
+          type: string
+        request_id:
+          type: string
+        details:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+  parameters:
+    TenantID:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      schema:
+        type: string
+    RequestID:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema:
+        type: string
+    IdempotencyKey:
+      name: X-Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+    Actor:
+      name: X-Actor
+      in: header
+      required: false
+      schema:
+        type: string
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness check
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime:
+                    type: string
+
+  /ready:
+    get:
+      tags: [Health]
+      summary: Readiness check (DB + Solana RPC)
+      operationId: getReady
+      responses:
+        "200":
+          description: All dependencies available
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  checks:
+                    type: object
+        "503":
+          description: One or more dependencies unavailable
+
+  /metrics:
+    get:
+      tags: [Health]
+      summary: Prometheus-compatible metrics
+      operationId: getMetrics
+      responses:
+        "200":
+          description: Metrics in JSON format
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /v1/intents:
+    post:
+      tags: [Intents]
+      summary: Create a new treasury intent
+      operationId: createIntent
+      parameters:
+        - $ref: "#/components/parameters/TenantID"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [wallet_id, destination, token, amount, chain, creator]
+              properties:
+                wallet_id:
+                  type: string
+                  example: "wallet-1"
+                destination:
+                  type: string
+                  description: Solana base58 address
+                  example: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+                token:
+                  type: string
+                  enum: [SOL, USDC, USDT]
+                  example: "USDC"
+                amount:
+                  type: integer
+                  format: int64
+                  minimum: 1
+                  example: 25000
+                chain:
+                  type: string
+                  enum: [solana]
+                  example: "solana"
+                creator:
+                  type: string
+                  example: "alice@acme.com"
+      responses:
+        "201":
+          description: Intent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Duplicate intent (idempotency)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      tags: [Intents]
+      summary: List intents for tenant
+      operationId: listIntents
+      parameters:
+        - $ref: "#/components/parameters/TenantID"
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of intents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Intent"
+
+  /v1/intents/{id}:
+    get:
+      tags: [Intents]
+      summary: Get intent by ID
+      operationId: getIntent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+      responses:
+        "200":
+          description: Intent details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+        "404":
+          description: Intent not found
+
+  /v1/intents/{id}/approve:
+    post:
+      tags: [Intents]
+      summary: Approve an intent (policy check + ZK verify)
+      operationId: approveIntent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          description: Intent approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+                  policy_result:
+                    $ref: "#/components/schemas/PolicyResult"
+        "403":
+          description: Policy denied
+        "404":
+          description: Intent not found
+
+  /v1/intents/{id}/execute:
+    post:
+      tags: [Intents]
+      summary: Execute intent (MPC sign + Solana submit)
+      operationId: executeIntent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          description: Intent executed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+                  tx_hash:
+                    type: string
+        "400":
+          description: Execution failed
+
+  /v1/intents/{id}/reject:
+    post:
+      tags: [Intents]
+      summary: Reject an intent
+      operationId: rejectIntent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          description: Intent rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+
+  /v1/intents/{id}/cancel:
+    post:
+      tags: [Intents]
+      summary: Cancel an intent
+      operationId: cancelIntent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+        - $ref: "#/components/parameters/RequestID"
+        - $ref: "#/components/parameters/Actor"
+      responses:
+        "200":
+          description: Intent cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent:
+                    $ref: "#/components/schemas/Intent"
+
+  /v1/wallets/{id}:
+    get:
+      tags: [Wallets]
+      summary: Get wallet by ID
+      operationId: getWallet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/TenantID"
+      responses:
+        "200":
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wallet:
+                    $ref: "#/components/schemas/Wallet"
+        "404":
+          description: Wallet not found
+
+  /v1/transactions:
+    get:
+      tags: [Transactions]
+      summary: List transaction records
+      operationId: listTransactions
+      parameters:
+        - $ref: "#/components/parameters/TenantID"
+        - name: intent_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TransactionRecord"
+
+  /v1/audit-events:
+    get:
+      tags: [Audit]
+      summary: List audit events
+      operationId: listAuditEvents
+      parameters:
+        - $ref: "#/components/parameters/TenantID"
+        - name: intent_id
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of audit events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+
+security:
+  - BearerAuth: []
