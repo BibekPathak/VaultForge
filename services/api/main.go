@@ -3,10 +3,8 @@ package main
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/vaultforge/vaultforge/services/api"
 	"github.com/vaultforge/vaultforge/services/api/core"
 	"github.com/vaultforge/vaultforge/services/api/routes"
 	"gorm.io/driver/postgres"
@@ -34,18 +32,18 @@ func main() {
 		&core.Transaction{},
 		&core.AuditEvent{},
 		&core.Policy{},
-		&core.MPCShare{},
+		&core.MPCShareRecord{},
 	)
 	if err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
-	// Initialize core services
+	// Initialize stores
 	intentStore := core.NewPostgresIntentStore(db)
-	walletStore := core.NewPostgresWalletStore(db)
-	transactionStore := core.NewPostgresTransactionStore(db)
-	auditStore := core.NewPostgresAuditStore(db)
-	policyEngine := core.NewPolicyEngine(db)
+
+	// Initialize core services
+	dbAdapter := core.NewDBAdapter(db)
+	policyEngine := core.NewPolicyEngine(dbAdapter)
 	zkVerifier := core.NewZKVerifier()
 	mpcSigner := core.NewMPCSigner(db)
 	reconciler := core.NewReconciler(db)
@@ -54,18 +52,19 @@ func main() {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	r.Use(api.AuthMiddleware())
+	r.Use(routes.AuthMiddleware())
 
 	// Create handler and register routes
-	handler := api.NewIntentHandler(
+	handler := routes.NewIntentHandler(
 		intentStore,
-		&policyEngine,
+		policyEngine,
 		zkVerifier,
 		mpcSigner,
 		reconciler,
 	)
 
-	routes.RegisterRoutes(r, handler, walletStore, transactionStore)
+	v1 := r.Group("/v1")
+	handler.RegisterRoutes(v1)
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -73,17 +72,8 @@ func main() {
 		port = "8080"
 	}
 
-	srv := &gin.Server{
-		Addr: ":" + port,
+	log.Printf("VaultForge API starting on %s", port)
+	if err := r.Run(":" + port); err != nil {
+		log.Fatalf("server failed: %v", err)
 	}
-
-	go func() {
-		log.Printf("VaultForge API starting on %s", port)
-		if err := srv.ListenAndServe(); err != nil && err != gin.ErrServerClosed {
-			log.Fatalf("server failed: %v", err)
-		}
-	}()
-
-	// Wait for shutdown signal
-	// ... (signal handling)
 }
