@@ -70,8 +70,16 @@ func (w *WebhookNotifier) deliver(endpoint WebhookEndpoint, event WebhookEvent) 
 		return
 	}
 
-	maxRetries := 3
+	maxRetries := 5
 	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			backoff := time.Duration(1<<uint(attempt-1)) * time.Second // 1s, 2s, 4s, 8s
+			if backoff > 30*time.Second {
+				backoff = 30 * time.Second
+			}
+			time.Sleep(backoff)
+		}
+
 		req, err := http.NewRequest("POST", endpoint.URL, bytes.NewReader(body))
 		if err != nil {
 			log.Printf("Failed to create webhook request: %v", err)
@@ -84,7 +92,6 @@ func (w *WebhookNotifier) deliver(endpoint WebhookEndpoint, event WebhookEvent) 
 		resp, err := w.httpClient.Do(req)
 		if err != nil {
 			log.Printf("Webhook delivery failed (attempt %d/%d) endpoint=%s: %v", attempt+1, maxRetries, endpoint.URL, err)
-			time.Sleep(time.Duration(attempt+1) * 2 * time.Second)
 			continue
 		}
 
@@ -92,12 +99,11 @@ func (w *WebhookNotifier) deliver(endpoint WebhookEndpoint, event WebhookEvent) 
 		resp.Body.Close()
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			log.Printf("Webhook delivered: endpoint=%s event=%s", endpoint.URL, event.EventType)
+			log.Printf("Webhook delivered: endpoint=%s event=%s (attempt %d)", endpoint.URL, event.EventType, attempt+1)
 			return
 		}
 
 		log.Printf("Webhook rejected (attempt %d/%d) endpoint=%s status=%d", attempt+1, maxRetries, endpoint.URL, resp.StatusCode)
-		time.Sleep(time.Duration(attempt+1) * 2 * time.Second)
 	}
 
 	log.Printf("Webhook delivery failed after %d attempts: endpoint=%s event=%s", maxRetries, endpoint.URL, event.EventType)

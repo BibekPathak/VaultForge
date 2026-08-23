@@ -1,6 +1,8 @@
 package core
 
 import (
+	"database/sql"
+	"log"
 	"net/http"
 	"time"
 
@@ -10,12 +12,13 @@ import (
 
 // HealthChecker provides liveness and readiness probe endpoints.
 type HealthChecker struct {
-	db *gorm.DB
+	db           *gorm.DB
+	solanaClient SolanaSubmitter
 }
 
 // NewHealthChecker creates a new health checker.
-func NewHealthChecker(db *gorm.DB) *HealthChecker {
-	return &HealthChecker{db: db}
+func NewHealthChecker(db *gorm.DB, solanaClient SolanaSubmitter) *HealthChecker {
+	return &HealthChecker{db: db, solanaClient: solanaClient}
 }
 
 // HealthStatus represents the health of a component.
@@ -47,6 +50,13 @@ func (h *HealthChecker) readiness(c *gin.Context) {
 		checks["database"] = "ok"
 	}
 
+	if err := h.checkSolana(); err != nil {
+		checks["solana_rpc"] = "error: " + err.Error()
+		healthy = false
+	} else {
+		checks["solana_rpc"] = "ok"
+	}
+
 	status := http.StatusOK
 	if !healthy {
 		status = http.StatusServiceUnavailable
@@ -68,3 +78,46 @@ func (h *HealthChecker) checkDB() error {
 	sqlDB.SetConnMaxLifetime(5 * time.Second)
 	return sqlDB.Ping()
 }
+
+func (h *HealthChecker) checkSolana() error {
+	if h.solanaClient == nil {
+		return nil
+	}
+	_, err := h.solanaClient.GetRecentBlockhash()
+	return err
+}
+
+// DBPoolStats returns current connection pool statistics.
+type DBPoolStats struct {
+	OpenConnections int `json:"open_connections"`
+	InUse           int `json:"in_use"`
+	Idle            int `json:"idle"`
+	WaitCount       int64 `json:"wait_count"`
+	WaitDuration    string `json:"wait_duration"`
+	MaxIdleClosed   int64 `json:"max_idle_closed"`
+	MaxIdleTimeClosed int64 `json:"max_idle_time_closed"`
+	MaxLifetimeClosed  int64 `json:"max_lifetime_closed"`
+}
+
+// GetDBPoolStats returns the current database connection pool statistics.
+func GetDBPoolStats(db *gorm.DB) *DBPoolStats {
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Failed to get underlying SQL DB for stats: %v", err)
+		return nil
+	}
+	stats := sqlDB.Stats()
+	return &DBPoolStats{
+		OpenConnections:   stats.OpenConnections,
+		InUse:             stats.InUse,
+		Idle:              stats.Idle,
+		WaitCount:         stats.WaitCount,
+		WaitDuration:      stats.WaitDuration.String(),
+		MaxIdleClosed:     stats.MaxIdleClosed,
+		MaxIdleTimeClosed: stats.MaxIdleTimeClosed,
+		MaxLifetimeClosed: stats.MaxLifetimeClosed,
+	}
+}
+
+// sqlDB is an alias for the database/sql.DB type used in pool stats.
+type sqlDB = sql.DB

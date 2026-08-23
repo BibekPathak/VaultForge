@@ -2,6 +2,7 @@ package core
 
 import (
 	"net/http"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -45,6 +46,8 @@ type MetricsSnapshot struct {
 	AuditEvents     int64          `json:"audit_events"`
 	Reconciliations int64          `json:"reconciliations"`
 	LatencyBuckets  map[string]int `json:"latency_buckets"`
+	DBPool          *DBPoolStats   `json:"db_pool,omitempty"`
+	Goroutines      int            `json:"goroutines"`
 }
 
 // NewMetricsCollector creates a new metrics collector.
@@ -92,8 +95,8 @@ func (m *MetricsCollector) RecordLatency(d time.Duration) {
 	val.(*atomic.Int64).Add(1)
 }
 
-// Snapshot returns a point-in-time copy of all metrics.
-func (m *MetricsCollector) Snapshot() MetricsSnapshot {
+// SnapshotWithDB returns a point-in-time copy of all metrics including DB pool stats.
+func (m *MetricsCollector) SnapshotWithDB(poolStats *DBPoolStats) MetricsSnapshot {
 	buckets := make(map[string]int)
 	m.latencyBuckets.Range(func(key, value any) bool {
 		buckets[key.(string)] = int(value.(*atomic.Int64).Load())
@@ -116,7 +119,14 @@ func (m *MetricsCollector) Snapshot() MetricsSnapshot {
 		AuditEvents:     m.auditEvents.Load(),
 		Reconciliations: m.reconciliations.Load(),
 		LatencyBuckets:  buckets,
+		DBPool:          poolStats,
+		Goroutines:      runtime.NumGoroutine(),
 	}
+}
+
+// Snapshot returns a point-in-time copy of all metrics.
+func (m *MetricsCollector) Snapshot() MetricsSnapshot {
+	return m.SnapshotWithDB(nil)
 }
 
 // MetricsMiddleware returns an HTTP middleware that records request metrics.

@@ -83,6 +83,14 @@ func RateLimitMiddleware(limiter *core.RateLimiter) gin.HandlerFunc {
 	}
 }
 
+// BodyLimitMiddleware wraps core.MaxBodyBytesMiddleware for use with Gin.
+func BodyLimitMiddleware(maxBytes int64) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxBytes)
+		c.Next()
+	}
+}
+
 // RequestIDMiddleware assigns a unique request ID if not already present.
 func RequestIDMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

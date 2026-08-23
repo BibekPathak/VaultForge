@@ -79,9 +79,8 @@ type signatureStatus struct {
 	Err              interface{} `json:"err"`
 }
 
-// SubmitTransaction submits a signed transaction to Solana.
+// SubmitTransaction submits a signed transaction to Solana with exponential backoff retry.
 func (c *SolanaClient) SubmitTransaction(txBytes []byte) (*SubmitResult, error) {
-	// Encode transaction bytes as base58 (simplified: use hex for now)
 	txHex := fmt.Sprintf("%x", txBytes)
 
 	req := rpcRequest{
@@ -97,29 +96,49 @@ func (c *SolanaClient) SubmitTransaction(txBytes []byte) (*SubmitResult, error) 
 		},
 	}
 
-	resp, err := c.sendRPC(req)
-	if err != nil {
-		return nil, fmt.Errorf("RPC request failed: %w", err)
-	}
+	var lastErr error
+	for attempt := 0; attempt <= c.maxRetries; attempt++ {
+		if attempt > 0 {
+			backoff := time.Duration(1<<uint(attempt-1)) * time.Second // 1s, 2s, 4s
+			if backoff > 10*time.Second {
+				backoff = 10 * time.Second
+			}
+			log.Printf("Retrying Solana submit (attempt %d/%d) after %v", attempt+1, c.maxRetries+1, backoff)
+			time.Sleep(backoff)
+		}
 
-	if resp.Error != nil {
+		resp, err := c.sendRPC(req)
+		if err != nil {
+			lastErr = fmt.Errorf("RPC request failed: %w", err)
+			continue
+		}
+
+		if resp.Error != nil {
+			// RPC-level errors (e.g., blockhash not found) are retryable
+			if attempt < c.maxRetries {
+				lastErr = fmt.Errorf("RPC error: %s", resp.Error.Message)
+				continue
+			}
+			return &SubmitResult{
+				Success: false,
+				Error:   resp.Error.Message,
+			}, nil
+		}
+
+		var sigResp submitTransactionResponse
+		if err := json.Unmarshal(resp.Result, &sigResp); err != nil {
+			return nil, fmt.Errorf("failed to parse response: %w", err)
+		}
+
+		log.Printf("Transaction submitted to Solana: signature=%s (attempt %d)", sigResp.Signature, attempt+1)
+
 		return &SubmitResult{
-			Success: false,
-			Error:   resp.Error.Message,
+			Signature: sigResp.Signature,
+			Success:   true,
 		}, nil
 	}
 
-	var sigResp submitTransactionResponse
-	if err := json.Unmarshal(resp.Result, &sigResp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	log.Printf("Transaction submitted to Solana: signature=%s", sigResp.Signature)
-
-	return &SubmitResult{
-		Signature: sigResp.Signature,
-		Success:   true,
-	}, nil
+	return nil, fmt.Errorf("submit failed after %d retries: %w", c.maxRetries, lastErr)
 }
 
 // WaitForConfirmation polls Solana for transaction confirmation.

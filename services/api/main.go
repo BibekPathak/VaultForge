@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -81,17 +82,18 @@ func main() {
 	solanaClient := core.NewSolanaClient(cfg.SolanaRPCURL)
 	webhooks := core.NewWebhookNotifier(db)
 	txStore := core.NewPostgresTransactionStore(db)
-	healthChecker := core.NewHealthChecker(db)
+	healthChecker := core.NewHealthChecker(db, solanaClient)
 
 	// Initialize rate limiter (100 req/s per tenant, burst of 200)
 	rateLimiter := core.NewRateLimiter(100, 200)
 
-	// Create HTTP router
+	// Create HTTP router with middleware stack
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(routes.CORSMiddleware())
 	r.Use(routes.RequestIDMiddleware())
 	r.Use(routes.TimeoutMiddleware(30 * time.Second))
+	r.Use(routes.BodyLimitMiddleware(cfg.MaxBodyBytes))
 	r.Use(routes.RateLimitMiddleware(rateLimiter))
 	r.Use(routes.MetricsMiddleware(metrics))
 	r.Use(routes.LoggingMiddleware(logger))
@@ -101,9 +103,10 @@ func main() {
 	healthGroup := r.Group("")
 	healthChecker.RegisterRoutes(healthGroup)
 
-	// Metrics endpoint
+	// Metrics endpoint with DB pool stats
 	r.GET("/metrics", func(c *gin.Context) {
-		c.JSON(http.StatusOK, metrics.Snapshot())
+		poolStats := core.GetDBPoolStats(db)
+		c.JSON(http.StatusOK, metrics.SnapshotWithDB(poolStats))
 	})
 
 	// Create handler and register routes
@@ -144,7 +147,8 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
-	logger.Info("shutdown signal received", "signal", sig.String())
+	logger.Info("shutdown signal received", "signal", sig.String(),
+		"goroutines", runtime.NumGoroutine())
 
 	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
@@ -154,6 +158,11 @@ func main() {
 		logger.Error("server forced to shutdown", "error", err)
 		os.Exit(1)
 	}
+
+	// Wait briefly for in-flight requests to drain
+	time.Sleep(500 * time.Millisecond)
+
+	logger.Info("draining complete", "goroutines_remaining", runtime.NumGoroutine())
 
 	// Close database connection
 	if err := sqlDB.Close(); err != nil {
