@@ -1,6 +1,6 @@
-use vaultforge_crypto::constant_time_eq;
-use log::{info, warn, error};
+use log::{info, warn};
 use thiserror::Error;
+use vaultforge_zk::{self as zk, ZKPolicyProof};
 
 /// Policy result from engine evaluation
 #[derive(Clone, Debug, PartialEq)]
@@ -214,15 +214,20 @@ impl PolicyEngine {
 
     /// Evaluate with ZK proof context
     /// 
-    /// This method incorporates ZK policy verification inputs
-    /// The ZK proof should validate private policy parameters
-    /// e.g., prove amount <= daily_limit without revealing daily_limit
+    /// This method incorporates ZK policy verification inputs.
+    /// The ZK proof validates private policy parameters
+    /// e.g., prove amount <= daily_limit without revealing daily_limit.
+    ///
+    /// Flow:
+    /// 1. Standard policy evaluation (deterministic rules)
+    /// 2. ZK proof verification (cryptographic proof of private constraints)
+    /// 3. Combined result
     pub fn evaluate_with_zk(
         &self,
         amount: u64,
         token: &str,
         recipient: &str,
-        _zk_proof: &serde_json::Value,
+        zk_proof: &ZKPolicyProof,
     ) -> Result<PolicyResult, Error> {
         // First, standard policy evaluation
         let standard_result = self.evaluate(amount, token, recipient);
@@ -230,16 +235,42 @@ impl PolicyEngine {
         if !matches!(standard_result, PolicyResult::Allow) {
             return Ok(standard_result);
         }
-        
+
         // Then, verify ZK proof
-        // In a full implementation, we would:
-        // 1. Extract public inputs from the ZK proof
-        // 2. Verify the proof satisfies the constraints
-        // 2. Return the combined result
+        // The ZK proof demonstrates that:
+        // - amount <= daily_limit (without revealing daily_limit)
+        // - amount <= per_wallet_limit (without revealing per_wallet_limit)
+        // - The proof is bound to this specific intent_id and policy_version
+        let zk_result = zk::verify_zk_policy_proof(zk_proof)
+            .map_err(|e| Error::ZKVerification(e.to_string()))?;
+
+        if !zk_result.valid {
+            warn!(
+                "ZK policy verification failed for intent={}: proof invalid",
+                zk_proof.public_inputs.intent_id
+            );
+            return Ok(PolicyResult::Deny {
+                reason: "ZK policy proof verification failed".to_string(),
+            });
+        }
+
+        // Verify the proof is bound to the correct amount
+        if zk_result.amount != amount {
+            warn!(
+                "ZK proof amount mismatch: proof={}, expected={}",
+                zk_result.amount, amount
+            );
+            return Ok(PolicyResult::Deny {
+                reason: "ZK proof amount does not match transaction amount".to_string(),
+            });
+        }
+
+        info!(
+            "ZK policy verification passed for intent={} amount={}",
+            zk_proof.public_inputs.intent_id, amount
+        );
         
-        info!("ZK policy verification passed (placeholder)");
-        
-        Ok(standard_result)
+        Ok(PolicyResult::Allow)
     }
 }
 
@@ -302,7 +333,7 @@ mod tests {
     }
     
     #[test]
-    fn TEST_POLICY_ALLOW_WITHIN_LIMITS() {
+    fn test_policy_allow_within_limits() {
         let mut engine = PolicyEngine::new();
         engine.load_policy("tenant_1", "v1").unwrap();
         
@@ -314,9 +345,40 @@ mod tests {
     fn test_evaluate_with_zk() {
         let mut engine = PolicyEngine::new();
         engine.load_policy("tenant_1", "v1").unwrap();
-        
-        let zk_proof = serde_json::json!({});
-        let result = engine.evaluate_with_zk(10_000, "USDC", "merchant_1", &zk_proof);
+
+        let proof = zk::ProofBuilder::new()
+            .daily_limit(100_000)
+            .per_wallet_limit(50_000)
+            .amount(10_000)
+            .policy_version("v1".to_string())
+            .intent_id("intent-test".to_string())
+            .wallet_id("wallet-test".to_string())
+            .build()
+            .unwrap();
+
+        let result = engine.evaluate_with_zk(10_000, "USDC", "merchant_1", &proof);
         assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), PolicyResult::Allow));
+    }
+
+    #[test]
+    fn test_evaluate_with_zk_amount_mismatch() {
+        let mut engine = PolicyEngine::new();
+        engine.load_policy("tenant_1", "v1").unwrap();
+
+        let proof = zk::ProofBuilder::new()
+            .daily_limit(100_000)
+            .per_wallet_limit(50_000)
+            .amount(10_000)
+            .policy_version("v1".to_string())
+            .intent_id("intent-test".to_string())
+            .wallet_id("wallet-test".to_string())
+            .build()
+            .unwrap();
+
+        // Evaluate with different amount than what's in the proof
+        let result = engine.evaluate_with_zk(20_000, "USDC", "merchant_1", &proof);
+        assert!(result.is_ok());
+        assert!(matches!(result.unwrap(), PolicyResult::Deny { .. }));
     }
 }
