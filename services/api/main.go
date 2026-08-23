@@ -33,6 +33,8 @@ func main() {
 		&core.AuditEvent{},
 		&core.Policy{},
 		&core.MPCShareRecord{},
+		&core.ReplayKey{},
+		&core.WebhookEndpoint{},
 	)
 	if err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
@@ -47,6 +49,10 @@ func main() {
 	zkVerifier := core.NewZKVerifier()
 	mpcSigner := core.NewMPCSigner(db)
 	reconciler := core.NewReconciler(db)
+	audit := core.NewAuditLogger(db)
+	solanaClient := core.NewSolanaClient(os.Getenv("SOLANA_RPC_URL"))
+	webhooks := core.NewWebhookNotifier(db)
+	txStore := core.NewPostgresTransactionStore(db)
 
 	// Create HTTP router
 	r := gin.New()
@@ -61,6 +67,10 @@ func main() {
 		zkVerifier,
 		mpcSigner,
 		reconciler,
+		audit,
+		solanaClient,
+		webhooks,
+		txStore,
 	)
 
 	v1 := r.Group("/v1")

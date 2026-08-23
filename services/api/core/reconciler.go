@@ -51,13 +51,13 @@ func (r *ReconcilerImpl) Start(intentID string) {
 
 	// Create audit event
 	auditEvent := AuditEvent{
-		ID:        generateUUID(),
+		ID:        GenerateUUID(),
 		TenantID:  intent.TenantID,
 		Actor:     "system",
 		Action:    "confirmed",
 		Resource:  "intent",
 		IntentID:  intentID,
-		RequestID: generateUUID(),
+		RequestID: GenerateUUID(),
 		Result:    "success",
 		CreatedAt: now,
 	}

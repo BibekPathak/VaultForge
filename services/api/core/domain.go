@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -167,7 +168,7 @@ type ReplayKey struct {
 func NewIntent(tenantID, walletID, destination, token, chain, creator string, amount int64) *Intent {
 	now := time.Now().UTC()
 	return &Intent{
-		ID:          generateUUID(),
+		ID:          GenerateUUID(),
 		TenantID:    tenantID,
 		WalletID:    walletID,
 		Destination: destination,
@@ -177,13 +178,36 @@ func NewIntent(tenantID, walletID, destination, token, chain, creator string, am
 		Nonce:       generateNonce(),
 		Creator:     creator,
 		Status:      "draft",
+		Expiry:      now.Add(1 * time.Hour),
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
 }
 
-func generateUUID() string {
+// GenerateUUID returns a new unique identifier.
+func GenerateUUID() string {
 	return fmt.Sprintf("uuid-%d", time.Now().UnixNano())
+}
+
+// GenerateRequestID returns a unique request ID for idempotency.
+func GenerateRequestID() string {
+	return fmt.Sprintf("req-%d", time.Now().UnixNano())
+}
+
+// ComputeIntentHash produces a SHA-256 digest over the canonical intent fields.
+func ComputeIntentHash(intent *Intent) []byte {
+	h := sha256.New()
+	h.Write([]byte(intent.ID))
+	h.Write([]byte(intent.TenantID))
+	h.Write([]byte(intent.WalletID))
+	h.Write([]byte(intent.Destination))
+	h.Write([]byte(intent.Token))
+	h.Write([]byte(intent.Amount))
+	h.Write([]byte(intent.Chain))
+	h.Write([]byte(intent.Nonce))
+	h.Write([]byte(intent.Creator))
+	h.Write([]byte(intent.Status))
+	return h.Sum(nil)
 }
 
 func generateNonce() string {

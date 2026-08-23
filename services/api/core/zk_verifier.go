@@ -103,7 +103,7 @@ func (z *ZKVerifierImpl) GenerateProof(input PolicyInputs) (*ZKProof, error) {
 	log.Printf("Generated ZK proof for intent=%s amount=%s", input.IntentID, input.Amount)
 
 	return &ZKProof{
-		ProofID:      generateUUID(),
+		ProofID:      GenerateUUID(),
 		PublicInputs: publicInputs,
 		ProofBytes:   proofBytes,
 	}, nil
