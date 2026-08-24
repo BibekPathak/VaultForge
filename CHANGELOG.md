@@ -44,7 +44,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release automation CI (tag → test → Docker build/push → GitHub Release)
 - Grafana dashboard JSON (11 panels: request rate, latency, errors, intents, ZK, MPC, DB pool, goroutines, memory, uptime, Solana RPC)
 - Prometheus alert rules (20 rules across API, DB, Solana, business logic, infrastructure)
-- Makefile target: backup-db
+- `/v1/version` endpoint exposing build version, environment, Go runtime, and platform
+- VERSION file for semantic versioning
+- API key validation with format, length, and character checks
+- Tenant ID sanitization (strips non-alphanumeric chars)
+- Security headers middleware (HSTS in production, CSP, X-Frame-Options, X-Content-Type-Options)
+- Configurable CORS origins via `CORS_ORIGINS` environment variable
+- Production JWT_SECRET validation (required in production, min 32 chars)
+- Graceful restart script (drains in-flight requests, verifies health)
+- Service status script (health, readiness, metrics, version, DB, disk — text or JSON)
+- Makefile targets: restart, restart-docker, status
+- Auth validation tests (API key format, tenant ID sanitization, constant-time compare)
+
+### Changed
+- Auth middleware now validates Authorization header format and sanitizes tenant IDs
+- Config validation enforces JWT_SECRET in production and minimum secret length
+- CORS middleware supports configurable origins (not just wildcard)
+- Startup log now includes version, Go runtime version
+- Server header set to "VaultForge" on all responses
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff

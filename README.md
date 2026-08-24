@@ -191,6 +191,27 @@ gunzip -c /var/backups/vaultforge/vaultforge_*.sql.gz | psql vaultforge
 
 See [docs/RUNBOOK.md](docs/RUNBOOK.md) for full procedures (RTO: 15min, RPO: 5min).
 
+## Operations
+
+```bash
+# Check service status
+make status
+
+# Graceful restart (drains in-flight requests)
+make restart
+
+# Backup database
+make backup-db
+
+# Security scan
+make security-scan
+
+# Load test
+make load-test
+```
+
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for disaster recovery and incident response procedures.
+
 ## Release Process
 
 ```bash
@@ -211,7 +232,11 @@ See [.github/workflows/release.yml](.github/workflows/release.yml) for the full 
 - Every state transition is audit-logged with request correlation
 - Rate limiting enforced per-tenant
 - Request timeouts at server and handler level
-- CORS configured for browser clients
+- CORS configurable via `CORS_ORIGINS` environment variable
+- Tenant ID sanitization (strips non-alphanumeric characters)
+- API key format validation (length, character set)
+- Security headers on all responses (HSTS, CSP, X-Frame-Options, X-Content-Type-Options)
+- Production requires `JWT_SECRET` (min 32 characters)
 - Systemd hardening (NoNewPrivileges, ProtectSystem, MemoryDenyWriteExecute)
 - Security scanning: cargo-audit + gosec + govulncheck
 

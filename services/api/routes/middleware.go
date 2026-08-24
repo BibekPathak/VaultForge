@@ -34,17 +34,44 @@ const (
 	CodeTimeout          = "REQUEST_TIMEOUT"
 )
 
-// AuthMiddleware extracts tenant ID from authentication context.
+// AuthMiddleware extracts tenant ID from authentication context and validates the request.
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Validate Authorization header
+		auth := c.GetHeader("Authorization")
 		tenantID := c.GetHeader("X-Tenant-ID")
-		if tenantID == "" {
-			respondError(c, http.StatusUnauthorized, CodeUnauthorized, "tenant identifier required")
+
+		if auth == "" && tenantID == "" {
+			respondError(c, http.StatusUnauthorized, CodeUnauthorized, "Authorization header or X-Tenant-ID required")
 			c.Abort()
 			return
 		}
 
-		c.Set("tenant_id", tenantID)
+		if tenantID == "" {
+			respondError(c, http.StatusUnauthorized, CodeUnauthorized, "X-Tenant-ID header required")
+			c.Abort()
+			return
+		}
+
+		// Sanitize tenant ID
+		sanitized := core.SanitizeTenantID(tenantID)
+		if sanitized == "" {
+			respondError(c, http.StatusBadRequest, CodeBadRequest, "invalid tenant ID format")
+			c.Abort()
+			return
+		}
+
+		// Validate bearer token if present
+		if auth != "" {
+			result := core.ValidateAPIKey(auth, sanitized)
+			if !result.Valid {
+				respondError(c, http.StatusUnauthorized, CodeUnauthorized, result.Error)
+				c.Abort()
+				return
+			}
+		}
+
+		c.Set("tenant_id", sanitized)
 		c.Next()
 	}
 }

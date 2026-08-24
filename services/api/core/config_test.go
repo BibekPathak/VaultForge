@@ -8,13 +8,14 @@ import (
 
 func TestConfig_Validate_Valid(t *testing.T) {
 	cfg := &Config{
-		Port:          "8080",
-		DatabaseURL:   "host=localhost",
-		SolanaRPCURL:  "https://api.devnet.solana.com",
-		Environment:   "development",
-		ReadTimeout:   15 * time.Second,
-		WriteTimeout:  30 * time.Second,
-		IdleTimeout:   60 * time.Second,
+		Port:            "8080",
+		DatabaseURL:     "host=localhost",
+		SolanaRPCURL:    "https://api.devnet.solana.com",
+		Environment:     "development",
+		LogLevel:        "info",
+		ReadTimeout:     15 * time.Second,
+		WriteTimeout:    30 * time.Second,
+		IdleTimeout:     60 * time.Second,
 		ShutdownTimeout: 10 * time.Second,
 	}
 	if err := cfg.Validate(); err != nil {

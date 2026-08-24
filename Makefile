@@ -112,6 +112,15 @@ seed-db: ## Seed database with test data
 backup-db: ## Backup database (full)
 	./scripts/backup-db.sh /var/backups/vaultforge full
 
+restart: ## Graceful restart (systemd)
+	./scripts/restart.sh
+
+restart-docker: ## Graceful restart (docker-compose)
+	./scripts/restart.sh --docker
+
+status: ## Show service status
+	./scripts/status.sh
+
 # ── Testing ────────────────────────────────────────────
 
 load-test: ## Run load tests (requires: hey)

@@ -17,6 +17,8 @@ import (
 	"gorm.io/gorm"
 )
 
+var version = "dev"
+
 func main() {
 	// Load and validate configuration
 	cfg := core.LoadConfig()
@@ -28,7 +30,9 @@ func main() {
 	logger.Info("starting VaultForge API",
 		"port", cfg.Port,
 		"environment", cfg.Environment,
+		"version", version,
 		"solana_rpc", cfg.SolanaRPCURL,
+		"runtime", runtime.Version(),
 	)
 
 	// Initialize database
@@ -108,11 +112,25 @@ func main() {
 	healthGroup := r.Group("")
 	healthChecker.RegisterRoutes(healthGroup)
 
+	// Version endpoint (no auth required)
+	r.GET("/v1/version", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"version":     version,
+			"environment": cfg.Environment,
+			"runtime":     runtime.Version(),
+			"goos":        runtime.GOOS,
+			"goarch":      runtime.GOARCH,
+		})
+	})
+
 	// Metrics endpoint with DB pool stats
 	r.GET("/metrics", func(c *gin.Context) {
 		poolStats := core.GetDBPoolStats(db)
 		c.JSON(http.StatusOK, metrics.SnapshotWithDB(poolStats))
 	})
+
+	// Security headers middleware (applied to all routes)
+	r.Use(securityHeadersMiddleware(cfg))
 
 	// Create handler and register routes
 	handler := routes.NewIntentHandler(
@@ -175,4 +193,25 @@ func main() {
 	}
 
 	logger.Info("VaultForge API stopped gracefully")
+}
+
+// securityHeadersMiddleware adds security headers to all responses.
+func securityHeadersMiddleware(cfg *core.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("X-Content-Type-Options", "nosniff")
+		c.Header("X-Frame-Options", "DENY")
+		c.Header("X-XSS-Protection", "1; mode=block")
+		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
+		c.Header("Content-Security-Policy", "default-src 'self'")
+
+		// Only add HSTS in production
+		if cfg.IsProduction() {
+			c.Header("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload")
+		}
+
+		// Remove server identification
+		c.Header("Server", "VaultForge")
+
+		c.Next()
+	}
 }
