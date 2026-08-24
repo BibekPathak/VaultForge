@@ -172,6 +172,38 @@ make integration-test
 | [ADR-003](docs/adr/003-go-for-api-service.md) | Go for API service |
 | [ADR-004](docs/adr/004-interface-driven-architecture.md) | Interface-driven architecture |
 
+### Operations
+
+| Document | Description |
+|----------|-------------|
+| [Runbook](docs/RUNBOOK.md) | Disaster recovery, backup/restore, failover, incident response |
+| [Monitoring](deploy/monitoring/) | Grafana dashboard + Prometheus alert rules |
+
+## Disaster Recovery
+
+```bash
+# Backup database
+make backup-db
+
+# Restore from backup
+gunzip -c /var/backups/vaultforge/vaultforge_*.sql.gz | psql vaultforge
+```
+
+See [docs/RUNBOOK.md](docs/RUNBOOK.md) for full procedures (RTO: 15min, RPO: 5min).
+
+## Release Process
+
+```bash
+# 1. Update CHANGELOG.md
+# 2. Bump version in Cargo.toml files and Chart.yaml
+# 3. Create and push tag
+git tag v0.17.0
+git push origin v0.17.0
+# 4. CI runs tests → builds Docker → creates GitHub Release
+```
+
+See [.github/workflows/release.yml](.github/workflows/release.yml) for the full pipeline.
+
 ## Security
 
 - All database queries use parameterized statements (GORM)

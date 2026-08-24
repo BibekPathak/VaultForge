@@ -109,6 +109,9 @@ helm-lint: ## Lint Helm chart
 seed-db: ## Seed database with test data
 	./scripts/seed-db.sh
 
+backup-db: ## Backup database (full)
+	./scripts/backup-db.sh /var/backups/vaultforge full
+
 # ── Testing ────────────────────────────────────────────
 
 load-test: ## Run load tests (requires: hey)

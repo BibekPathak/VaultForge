@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Troubleshooting & FAQ guide
 - Contributing guide with code style, PR templates, and security checklist
 - Updated README with full documentation index and architecture diagram
+- PostgreSQL backup script with pg_dump, compression, integrity check, and retention
+- Disaster recovery runbook (backup, restore, failover, incident response, communication templates)
+- Release automation CI (tag → test → Docker build/push → GitHub Release)
+- Grafana dashboard JSON (11 panels: request rate, latency, errors, intents, ZK, MPC, DB pool, goroutines, memory, uptime, Solana RPC)
+- Prometheus alert rules (20 rules across API, DB, Solana, business logic, infrastructure)
+- Makefile target: backup-db
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff
