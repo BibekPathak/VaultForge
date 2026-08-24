@@ -11,6 +11,7 @@ env:
   RUST_VERSION: "stable"
 
 jobs:
+  # ── Go ─────────────────────────────────────────────
   go-lint:
     name: Go Lint & Build
     runs-on: ubuntu-latest
@@ -31,6 +32,10 @@ jobs:
 
       - name: Build
         run: go build -o vaultforge-api .
+        working-directory: services/api
+
+      - name: gofmt check
+        run: test -z "$(gofmt -l .)"
         working-directory: services/api
 
   go-test:
@@ -57,12 +62,24 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      - name: Run tests
-        run: go test -v -count=1 -race ./...
+      - name: Run tests with race detector
+        run: go test -v -count=1 -race -coverprofile=coverage.out ./...
         working-directory: services/api
         env:
           DATABASE_URL: "host=localhost user=vaultforge password=vaultforge dbname=vaultforge_test port=5432 sslmode=disable"
 
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: go-coverage
+          path: services/api/coverage.out
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1
+        working-directory: services/api
+
+  # ── Rust ───────────────────────────────────────────
   rust-test:
     name: Rust Tests (${{ matrix.crate }})
     runs-on: ubuntu-latest
@@ -99,8 +116,47 @@ jobs:
         run: cargo fmt -- --check
         working-directory: crates/${{ matrix.crate }}
 
+  # ── Security Scanning ─────────────────────────────
+  cargo-audit:
+    name: Rust Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Audit Rust dependencies
+        run: |
+          for crate_dir in crates/*/; do
+            if [ -f "$crate_dir/Cargo.toml" ]; then
+              echo "Auditing $crate_dir..."
+              cd "$crate_dir" && cargo audit && cd ../..
+            fi
+          done
+
+  go-vulncheck:
+    name: Go Vulnerability Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+      - name: Run govulncheck
+        run: govulncheck ./...
+        working-directory: services/api
+
+  # ── Docker ─────────────────────────────────────────
   docker:
-    name: Docker Build
+    name: Docker Build & Scan
     runs-on: ubuntu-latest
     needs: [go-lint]
     steps:
@@ -109,5 +165,17 @@ jobs:
       - name: Build Docker image
         run: docker build -f docker/Dockerfile.api -t vaultforge-api:test ..
 
-      - name: Verify image
-        run: docker run --rm vaultforge-api:test --help || true
+      - name: Verify image runs
+        run: docker run --rm --detach --name vf-test -p 8080:8080 vaultforge-api:test && sleep 3 && docker logs vf-test && docker stop vf-test
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: vaultforge-api:test
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+        continue-on-error: true
+
+      - name: Image size
+        run: docker images vaultforge-api:test --format "{{.Size}}"

@@ -126,18 +126,24 @@ Full API specification: [deploy/openapi.yaml](deploy/openapi.yaml)
 ## Testing
 
 ```bash
-# All tests (92 Go + 48 Rust = 140 total)
+# All tests (96 Go + 48 Rust = 144 total)
 make test
+
+# Go tests with race detector
+make test-race
+
+# Go tests with coverage report (HTML)
+make test-coverage
 
 # Go tests only
 cd services/api && go test ./core/... ./routes/...
 
 # Rust tests only
 for crate in crypto mpc zk policy transaction solana; do
-  cd crates/$crate && cargo test && cd ../..
+  cd crates/$$crate && cargo test && cd ../..
 done
 
-# Benchmarks
+# Rust benchmarks
 cd crates/crypto && cargo bench
 cd crates/zk && cargo bench
 
@@ -146,6 +152,9 @@ make load-test
 
 # Integration tests
 make integration-test
+
+# Full verification (tests + security scan)
+make verify
 ```
 
 ## Documentation
@@ -161,6 +170,7 @@ make integration-test
 | [API Examples](docs/EXAMPLES.md) | Curl examples for all endpoints |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 | [Contributing](CONTRIBUTING.md) | How to contribute |
+| [Production Readiness](docs/PRODUCTION_READINESS.md) | Pre-deployment checklist and file inventory |
 | [Changelog](CHANGELOG.md) | Version history |
 
 ### Architecture Decision Records

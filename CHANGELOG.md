@@ -53,8 +53,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production JWT_SECRET validation (required in production, min 32 chars)
 - Graceful restart script (drains in-flight requests, verifies health)
 - Service status script (health, readiness, metrics, version, DB, disk — text or JSON)
-- Makefile targets: restart, restart-docker, status
-- Auth validation tests (API key format, tenant ID sanitization, constant-time compare)
+- Docker image hardened: distroless base, nonroot user, trimmed binary, OCI labels
+- CI pipeline: cargo-audit, govulncheck, Trivy Docker scan, gofmt check, coverage artifact
+- Makefile targets: test-race, test-coverage, test-coverage-open, docker-scan, security-scan-all, verify
+- Production readiness checklist document
 
 ### Changed
 - Auth middleware now validates Authorization header format and sanitizes tenant IDs
@@ -62,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CORS middleware supports configurable origins (not just wildcard)
 - Startup log now includes version, Go runtime version
 - Server header set to "VaultForge" on all responses
+- Docker image uses distroless base instead of Alpine (smaller, more secure)
+- CI tests run with race detector and upload coverage artifact
+- Security scan expanded to include Docker image vulnerability scanning
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff

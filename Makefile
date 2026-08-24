@@ -50,6 +50,21 @@ test-integration: ## Run integration tests
 
 test-all: test-go test-rust test-integration ## Run all tests including integration
 
+test-race: ## Run Go tests with race detector
+	cd $(GO_API_DIR) && go test -v -count=1 -race ./...
+
+test-coverage: ## Run Go tests with coverage report
+	cd $(GO_API_DIR) && go test -count=1 -coverprofile=coverage.out ./... && \
+		go tool cover -func=coverage.out && \
+		go tool cover -html=coverage.out -o coverage.html && \
+		echo "Coverage report: coverage.html"
+
+test-coverage-open: ## Run tests and open coverage report
+	cd $(GO_API_DIR) && go test -count=1 -coverprofile=coverage.out ./... && \
+		go tool cover -func=coverage.out && \
+		go tool cover -html=coverage.out -o coverage.html && \
+		open coverage.html 2>/dev/null || xdg-open coverage.html 2>/dev/null || echo "Open coverage.html manually"
+
 # ── Lint ───────────────────────────────────────────────
 
 lint: lint-go lint-rust ## Run all linters
@@ -78,6 +93,18 @@ fmt-rust: ## Format Rust code
 docker-build: ## Build Docker image
 	docker build -f docker/Dockerfile.api -t vaultforge-api:latest ..
 
+docker-scan: docker-build ## Build and scan Docker image for vulnerabilities
+	@echo "=== Docker Image Security Scan ==="
+	@echo "Image: vaultforge-api:latest"
+	@echo ""
+	@command -v trivy >/dev/null 2>&1 && \
+		trivy image --severity HIGH,CRITICAL vaultforge-api:latest || \
+		echo "Trivy not installed. Install: brew install trivy"
+	@echo ""
+	@command -v grype >/dev/null 2>&1 && \
+		grype vaultforge-api:latest || \
+		echo "Grype not installed. Install: brew install grype"
+
 docker-up: ## Start services with docker-compose
 	cd docker && docker compose up -d
 
@@ -97,8 +124,17 @@ create-wallets: ## Create test wallets for devnet
 
 # ── Operations ──────────────────────────────────────────
 
-security-scan: ## Run security audit (cargo-audit + gosec)
+security-scan: ## Run security audit (cargo-audit + gosec + govulncheck)
 	./scripts/security-scan.sh
+
+security-scan-all: security-scan ## Run full security scan including Docker
+	./scripts/security-scan.sh
+	$(MAKE) docker-scan
+
+verify: test-race security-scan ## Full verification (tests + security)
+	@echo "=== Full Verification Complete ==="
+	@echo "All tests passed with race detector."
+	@echo "Security scan complete."
 
 helm-template: ## Render Helm templates locally
 	helm template vaultforge deploy/helm/vaultforge
