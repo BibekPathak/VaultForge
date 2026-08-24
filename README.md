@@ -44,10 +44,16 @@ vaultforge/
 │   └── api/                  # Go REST API service
 │       ├── core/             # Business logic, stores, crypto
 │       └── routes/           # HTTP handlers, middleware
+├── deploy/                   # Production deployment configs
+│   ├── systemd/              # Systemd unit files
+│   ├── nginx/                # Nginx reverse proxy
+│   ├── helm/                 # Kubernetes Helm chart
+│   ├── logrotate/            # Log rotation
+│   └── openapi.yaml          # API specification
 ├── docker/                   # Dockerfile + docker-compose
 ├── scripts/                  # Deployment + test scripts
 ├── tests/                    # Integration + e2e tests
-├── docs/                     # Architecture, threat model, invariants
+├── docs/                     # Documentation
 ├── Anchor.toml               # Anchor project config
 └── Makefile                  # Build automation
 ```
@@ -101,9 +107,11 @@ make docker-up
 | POST | `/v1/intents/:id/execute` | Execute (simulate + sign + submit) |
 | POST | `/v1/intents/:id/reject` | Reject intent |
 | POST | `/v1/intents/:id/cancel` | Cancel intent |
-| GET | `/v1/wallets` | List wallets |
+| GET | `/v1/wallets/:id` | Get wallet |
 | GET | `/v1/transactions` | List transactions |
 | GET | `/v1/audit-events` | List audit events |
+
+Full API specification: [deploy/openapi.yaml](deploy/openapi.yaml)
 
 ## Environment Variables
 
@@ -118,18 +126,51 @@ make docker-up
 ## Testing
 
 ```bash
-# Go tests (77 tests)
-make test-go
-
-# Rust tests (48 tests)
-make test-rust
-
-# All tests
+# All tests (92 Go + 48 Rust = 140 total)
 make test
 
+# Go tests only
+cd services/api && go test ./core/... ./routes/...
+
+# Rust tests only
+for crate in crypto mpc zk policy transaction solana; do
+  cd crates/$crate && cargo test && cd ../..
+done
+
+# Benchmarks
+cd crates/crypto && cargo bench
+cd crates/zk && cargo bench
+
+# Load tests (requires: go install github.com/rakyll/hey@latest)
+make load-test
+
 # Integration tests
-make test-integration
+make integration-test
 ```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | System design and component overview |
+| [Invariants](docs/invariants.md) | 10 system invariants (I1-I10) |
+| [Threat Model](docs/threat-model.md) | Security threat analysis |
+| [Performance](docs/PERFORMANCE.md) | Benchmarks and latency targets |
+| [Deployment](docs/DEPLOYMENT.md) | Devnet deployment guide |
+| [Development](docs/DEVELOPMENT.md) | Local setup and workflow |
+| [API Examples](docs/EXAMPLES.md) | Curl examples for all endpoints |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
+| [Contributing](CONTRIBUTING.md) | How to contribute |
+| [Changelog](CHANGELOG.md) | Version history |
+
+### Architecture Decision Records
+
+| ADR | Decision |
+|-----|----------|
+| [ADR-001](docs/adr/001-use-frost-for-mpc.md) | Use FROST for MPC threshold signing |
+| [ADR-002](docs/adr/002-hash-based-zk-proofs.md) | Hash-based ZK proofs (prototyping) |
+| [ADR-003](docs/adr/003-go-for-api-service.md) | Go for API service |
+| [ADR-004](docs/adr/004-interface-driven-architecture.md) | Interface-driven architecture |
 
 ## Security
 
@@ -139,8 +180,12 @@ make test-integration
 - Rate limiting enforced per-tenant
 - Request timeouts at server and handler level
 - CORS configured for browser clients
+- Systemd hardening (NoNewPrivileges, ProtectSystem, MemoryDenyWriteExecute)
+- Security scanning: cargo-audit + gosec + govulncheck
 
 See [docs/threat-model.md](docs/threat-model.md) for the full threat model.
+
+See [docs/invariants.md](docs/invariants.md) for the 10 system invariants.
 
 ## License
 

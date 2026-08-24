@@ -33,7 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rust benchmark suite for ZK policy (prove, verify, full roundtrip)
 - Integration test script for API lifecycle + Solana devnet connectivity
 - Performance baseline documentation with latency targets and scaling thresholds
-- Makefile targets: load-test, integration-test, bench, security-scan, helm-template, helm-lint, seed-db
+- Local development setup guide with step-by-step instructions
+- Architecture Decision Records (ADRs) for key technical choices
+- API usage examples with curl commands for all endpoints
+- Troubleshooting & FAQ guide
+- Contributing guide with code style, PR templates, and security checklist
+- Updated README with full documentation index and architecture diagram
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff
