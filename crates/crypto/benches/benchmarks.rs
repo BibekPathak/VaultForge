@@ -11,15 +11,15 @@ fn bench_sha256(c: &mut Criterion) {
     let data_1m = vec![0xEFu8; 1024 * 1024];
 
     c.bench_function("sha256_1kb", |b| {
-        b.iter(|| Sha256::hash(black_box(&data_1k)))
+        b.iter(|| black_box(Sha256::hash(black_box(&data_1k))))
     });
 
     c.bench_function("sha256_64kb", |b| {
-        b.iter(|| Sha256::hash(black_box(&data_64k)))
+        b.iter(|| black_box(Sha256::hash(black_box(&data_64k))))
     });
 
     c.bench_function("sha256_1mb", |b| {
-        b.iter(|| Sha256::hash(black_box(&data_1m)))
+        b.iter(|| black_box(Sha256::hash(black_box(&data_1m))))
     });
 }
 
@@ -30,15 +30,15 @@ fn bench_aes_gcm(c: &mut Criterion) {
     let plaintext_large = vec![0xCCu8; 65536];
 
     c.bench_function("aes256gcm_encrypt_64b", |b| {
-        b.iter(|| AES256GCM::encrypt(black_box(&key), plaintext_small.clone()))
+        b.iter(|| black_box(AES256GCM::encrypt(black_box(&key), plaintext_small.clone())))
     });
 
     c.bench_function("aes256gcm_encrypt_1kb", |b| {
-        b.iter(|| AES256GCM::encrypt(black_box(&key), plaintext_medium.clone()))
+        b.iter(|| black_box(AES256GCM::encrypt(black_box(&key), plaintext_medium.clone())))
     });
 
     c.bench_function("aes256gcm_encrypt_64kb", |b| {
-        b.iter(|| AES256GCM::encrypt(black_box(&key), plaintext_large.clone()))
+        b.iter(|| black_box(AES256GCM::encrypt(black_box(&key), plaintext_large.clone())))
     });
 }
 
@@ -46,8 +46,8 @@ fn bench_kdf(c: &mut Criterion) {
     let password = b"hunter2";
     let salt = [0x55u8; 16];
 
-    c.bench_function("kdf_sha256_1000_rounds", |b| {
-        b.iter(|| SimpleKdf::derive_key(black_box(password), &salt, 1000))
+    c.bench_function("kdf_single_sha256_derive", |b| {
+        b.iter(|| black_box(SimpleKdf::derive_key(black_box(password), &salt, 32)))
     });
 }
 
@@ -57,15 +57,15 @@ fn bench_merkle(c: &mut Criterion) {
     let leaves_256: Vec<[u8; 32]> = (0u8..=255).map(|i| Sha256::hash(&[i])).collect();
 
     c.bench_function("merkle_root_8_leaves", |b| {
-        b.iter(|| merkle_root(black_box(&leaves_8)))
+        b.iter(|| black_box(merkle_root(black_box(&leaves_8))))
     });
 
     c.bench_function("merkle_root_64_leaves", |b| {
-        b.iter(|| merkle_root(black_box(&leaves_64)))
+        b.iter(|| black_box(merkle_root(black_box(&leaves_64))))
     });
 
     c.bench_function("merkle_root_256_leaves", |b| {
-        b.iter(|| merkle_root(black_box(&leaves_256)))
+        b.iter(|| black_box(merkle_root(black_box(&leaves_256))))
     });
 }
 
@@ -75,11 +75,11 @@ fn bench_constant_time_eq(c: &mut Criterion) {
     let neq = [0xCDu8; 32];
 
     c.bench_function("constant_time_eq_equal", |b| {
-        b.iter(|| constant_time_eq(&a, &eq))
+        b.iter(|| black_box(constant_time_eq(&a, &eq)))
     });
 
     c.bench_function("constant_time_eq_not_equal", |b| {
-        b.iter(|| constant_time_eq(&a, &neq))
+        b.iter(|| black_box(constant_time_eq(&a, &neq)))
     });
 }
 

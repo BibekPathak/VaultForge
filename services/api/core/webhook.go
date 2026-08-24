@@ -37,12 +37,12 @@ func NewWebhookNotifier(db *gorm.DB) *WebhookNotifier {
 
 // WebhookEndpoint represents a registered webhook endpoint.
 type WebhookEndpoint struct {
-	ID        string `json:"id" gorm:"primaryKey"`
-	TenantID  string `json:"tenant_id" gorm:"index"`
-	URL       string `json:"url"`
-	EventType string `json:"event_type"`
-	IsActive  bool   `json:"is_active" gorm:"default:true"`
-	Secret    string `json:"secret"`
+	ID        string    `json:"id" gorm:"primaryKey"`
+	TenantID  string    `json:"tenant_id" gorm:"index"`
+	URL       string    `json:"url"`
+	EventType string    `json:"event_type"`
+	IsActive  bool      `json:"is_active" gorm:"default:true"`
+	Secret    string    `json:"secret"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -95,8 +95,12 @@ func (w *WebhookNotifier) deliver(endpoint WebhookEndpoint, event WebhookEvent) 
 			continue
 		}
 
-		io.Copy(io.Discard, resp.Body)
-		resp.Body.Close()
+		if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+			log.Printf("Webhook response body read error endpoint=%s: %v", endpoint.URL, err)
+		}
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Webhook response body close error endpoint=%s: %v", endpoint.URL, err)
+		}
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			log.Printf("Webhook delivered: endpoint=%s event=%s (attempt %d)", endpoint.URL, event.EventType, attempt+1)
@@ -131,8 +135,8 @@ func (w *WebhookNotifier) NotifyIntentStateChange(intent *Intent, eventType stri
 // NotifyTransactionConfirmed sends a webhook for transaction confirmation.
 func (w *WebhookNotifier) NotifyTransactionConfirmed(tx *Transaction) {
 	payload, _ := json.Marshal(map[string]interface{}{
-		"transaction_id":      tx.ID,
-		"intent_id":          tx.IntentID,
+		"transaction_id":         tx.ID,
+		"intent_id":              tx.IntentID,
 		"confirmation_signature": tx.ConfirmSignature,
 	})
 

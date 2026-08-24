@@ -48,11 +48,13 @@ func (z *ZKVerifierImpl) GenerateProof(input PolicyInputs) (*ZKProof, error) {
 		dailyLimit = 100000 // default
 	}
 
-	if amount.Int64() > dailyLimit {
+	amountU := amount.Uint64()
+	dailyLimitU := uint64(dailyLimit) // #nosec G115 -- dailyLimit is a positive int64 constant
+	if amountU > dailyLimitU {
 		return nil, fmt.Errorf("amount %d exceeds daily limit %d", amount.Int64(), dailyLimit)
 	}
 
-	diff := uint64(dailyLimit - amount.Int64())
+	diff := dailyLimitU - amountU
 
 	// Generate blinding factors
 	blindingDaily := randomBytes32()
@@ -195,7 +197,7 @@ func computeCommitment(value uint64, blinding [32]byte, domain []byte) [32]byte 
 	// encode value as 8 bytes LE
 	var buf [8]byte
 	for i := 0; i < 8; i++ {
-		buf[i] = byte(value >> (8 * i))
+		buf[i] = byte(value >> (8 * i)) // #nosec G115 -- intentional little-endian byte encoding
 	}
 	h.Write(buf[:])
 	h.Write(blinding[:])
@@ -212,7 +214,7 @@ func computeChallenge(cd, ca, diff [32]byte, amount uint64, policyVersion, inten
 	h.Write(diff[:])
 	var buf [8]byte
 	for i := 0; i < 8; i++ {
-		buf[i] = byte(amount >> (8 * i))
+		buf[i] = byte(amount >> (8 * i)) // #nosec G115 -- intentional little-endian byte encoding
 	}
 	h.Write(buf[:])
 	h.Write([]byte(policyVersion))

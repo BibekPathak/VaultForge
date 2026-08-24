@@ -32,7 +32,7 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Test intents
-INSERT INTO intents (id, tenant_id, wallet_id, destination, token, amount, chain, nonce, creator, status, policy_version, expiry, created_at, updated_at)
+INSERT INTO intents (id, tenant_id, wallet_id, destination, token_mint, amount, chain, nonce, creator, status, policy_version, expiry, created_at, updated_at)
 VALUES
   ('intent-draft-1', 'tenant-1', 'wallet-1', 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', 'USDC', '25000', 'solana', 'nonce-draft-1', 'alice@acme.com', 'draft', 'v1', NOW() + INTERVAL '1 hour', NOW(), NOW()),
   ('intent-pending-1', 'tenant-1', 'wallet-1', 'So11111111111111111111111111111111111111112', 'SOL', '10000', 'solana', 'nonce-pending-1', 'bob@acme.com', 'pending', 'v1', NOW() + INTERVAL '1 hour', NOW(), NOW())

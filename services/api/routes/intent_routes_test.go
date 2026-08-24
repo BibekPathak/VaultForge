@@ -67,8 +67,8 @@ func TestCreateIntent_Success(t *testing.T) {
 	if resp.Intent == nil {
 		t.Fatal("intent should not be nil")
 	}
-	if resp.Intent.Status != "draft" {
-		t.Errorf("expected status=draft, got %s", resp.Intent.Status)
+	if resp.Intent.Status != "pending" {
+		t.Errorf("expected status=pending, got %s", resp.Intent.Status)
 	}
 }
 

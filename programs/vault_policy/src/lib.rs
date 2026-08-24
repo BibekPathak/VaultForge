@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("VFP1111111111111111111111111111111111111111");
+declare_id!("9J4EcFGBxvMqiYBDN9A1Ke4f73iJckGG6ibhqx5W4aX6");
 
 #[program]
 pub mod vault_policy {
@@ -145,6 +145,7 @@ pub struct RecordSigner<'info> {
 pub struct Vault {
     pub owner: Pubkey,        // 32
     pub threshold: u8,        // 1
+    #[max_len(3)]
     pub signers: Vec<Pubkey>, // 4 + 32 * 3 = 100
     pub daily_limit: u64,     // 8
     pub single_tx_limit: u64, // 8

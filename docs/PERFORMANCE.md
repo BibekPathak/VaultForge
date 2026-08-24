@@ -1,39 +1,72 @@
 # VaultForge Performance Baseline
 
-Established on Phase 15 using Criterion benchmarks on a reference machine.
+Measured with [Criterion](https://github.com/bheisler/criterion.rs) on 2026-08-24.
+All numbers are **measured** (mean of 100 samples, Criterion statistical estimator), not estimates.
+
+## Reproducing These Numbers
+
+```bash
+# Crypto primitives
+cd crates/crypto && cargo bench --bench benchmarks -- --save-baseline v1.0.0
+
+# ZK policy
+cd crates/zk && cargo bench --bench benchmarks -- --save-baseline v1.0.0
+
+# Compare against a stored baseline
+cargo bench --bench benchmarks -- --baseline v1.0.0
+```
+
+Raw Criterion output is committed under `benchmarks/results/`.
+
+> Note: benchmark closures use `black_box()` on inputs **and** outputs to prevent
+> dead-code elimination and constant hoisting (verified against a fast-fail bug
+> in `zk_prove_near_limit`).
 
 ## Reference Machine
 
-- CPU: AMD Ryzen 7 5800X (8 cores / 16 threads)
-- RAM: 32 GB DDR4-3600
-- OS: Ubuntu 24.04 LTS
-- Rust: 1.78.0
-- Go: 1.22.3
+| Property | Value |
+|----------|-------|
+| CPU | Intel Core 5 120U, 12 CPUs (10 cores / 12 threads), up to 5.0 GHz |
+| RAM | 16 GB (15 GiB usable) |
+| OS | Linux 6.17.13-hardened1 (Arch) |
+| Rust | 1.93.1 |
+| Cargo | 1.93.1 |
+| Go | 1.25.13 |
+| Criterion | 0.5.1 |
 
 ## Crypto Primitives (`cargo bench -p vaultforge-crypto`)
 
-| Operation | Latency (p50) | Latency (p99) | Throughput |
-|-----------|--------------|--------------|------------|
-| SHA-256 1 KB | ~1.2 µs | ~1.8 µs | ~800 MB/s |
-| SHA-256 64 KB | ~18 µs | ~25 µs | ~3.5 GB/s |
-| SHA-256 1 MB | ~290 µs | ~380 µs | ~3.6 GB/s |
-| AES-256-GCM encrypt 64 B | ~0.8 µs | ~1.2 µs | ~80 MB/s |
-| AES-256-GCM encrypt 1 KB | ~1.5 µs | ~2.2 µs | ~660 MB/s |
-| AES-256-GCM encrypt 64 KB | ~25 µs | ~35 µs | ~2.5 GB/s |
-| KDF (1000 rounds) | ~45 ms | ~55 ms | — |
-| Merkle root 8 leaves | ~3 µs | ~5 µs | — |
-| Merkle root 64 leaves | ~20 µs | ~30 µs | — |
-| Merkle root 256 leaves | ~85 µs | ~120 µs | — |
-| constant_time_eq 32 B | ~15 ns | ~25 ns | — |
+Mean latency (100 samples). Throughput computed from mean time / payload size.
+
+| Operation | Mean latency | Throughput |
+|-----------|-------------|------------|
+| SHA-256 1 KB | 715 ns | ~1.4 GB/s |
+| SHA-256 64 KB | 40.5 µs | ~1.6 GB/s |
+| SHA-256 1 MB | 641 µs | ~1.6 GB/s |
+| AES-256-GCM encrypt 64 B | 454 ns | ~141 MB/s |
+| AES-256-GCM encrypt 1 KB | 1.64 µs | ~625 MB/s |
+| AES-256-GCM encrypt 64 KB | 83.5 µs | ~785 MB/s |
+| KDF (single SHA-256 key derivation) | 82.7 ns | — |
+| Merkle root 8 leaves | 905 ns | — |
+| Merkle root 64 leaves | 7.77 µs | — |
+| Merkle root 256 leaves | 31.5 µs | — |
+| constant_time_eq 32 B (equal) | 5.3 ns | — |
+| constant_time_eq 32 B (not equal) | 6.0 ns | — |
+
+> Note: `SimpleKdf::derive_key` performs a single SHA-256 over (password || salt),
+> **not** an iterated rounds KDF. The `output_length` argument caps at 32 bytes.
+> If an iterated (e.g. PBKDF2/Argon2) KDF is added, re-benchmark this entry.
 
 ## ZK Policy (`cargo bench -p vaultforge-zk`)
 
-| Operation | Latency (p50) | Latency (p99) |
-|-----------|--------------|--------------|
-| Prove (small amount) | ~12 ms | ~18 ms |
-| Prove (near limit) | ~12 ms | ~18 ms |
-| Verify proof | ~3 ms | ~5 ms |
-| Full roundtrip (prove+verify) | ~15 ms | ~23 ms |
+Mean latency (100 samples).
+
+| Operation | Mean latency |
+|-----------|-------------|
+| Prove (amount 25,000) | 1.28 µs |
+| Prove (amount 49,999, near per-wallet limit) | 1.29 µs |
+| Verify proof | 775 ns |
+| Full roundtrip (prove + verify) | 2.06 µs |
 
 ### Proof Size
 
@@ -45,7 +78,7 @@ Established on Phase 15 using Criterion benchmarks on a reference machine.
 
 ## API Latency Targets
 
-Based on the crypto benchmarks and typical service overhead:
+Targets below are design goals to be validated with load tests (`scripts/load-test.sh`):
 
 | Endpoint | Target p50 | Target p99 | Notes |
 |----------|-----------|-----------|-------|
@@ -90,10 +123,9 @@ Based on the crypto benchmarks and typical service overhead:
 
 ## Known Bottlenecks
 
-1. **KDF (Argon2)**: ~45ms per derivation — cache derived keys
-2. **Solana RPC**: Network round-trip — use WebSocket subscriptions for confirmation
-3. **DB connection pool**: Size limits throughput — monitor pool utilization
-4. **MPC signing**: Multi-party coordination — expected latency > 100ms
+1. **Solana RPC**: Network round-trip dominates tx latency — use WebSocket subscriptions for confirmation
+2. **DB connection pool**: Size limits throughput — monitor pool utilization
+3. **MPC signing**: Multi-party coordination — expected latency > 100ms
 
 ## Monitoring Checklist
 

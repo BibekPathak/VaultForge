@@ -1,0 +1,136 @@
+    Finished `bench` profile [optimized] target(s) in 0.08s
+     Running benches/benchmarks.rs (target/release/deps/benchmarks-b804bfb4dd6528c5)
+Gnuplot not found, using plotters backend
+Benchmarking sha256_1kb
+Benchmarking sha256_1kb: Warming up for 3.0000 s
+Benchmarking sha256_1kb: Collecting 100 samples in estimated 5.0021 s (7.0M iterations)
+Benchmarking sha256_1kb: Analyzing
+sha256_1kb              time:   [705.47 ns 715.07 ns 723.27 ns]
+                        change: [-1.9750% -1.1824% -0.4193%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 17 outliers among 100 measurements (17.00%)
+  14 (14.00%) low severe
+  3 (3.00%) high mild
+
+Benchmarking sha256_64kb
+Benchmarking sha256_64kb: Warming up for 3.0000 s
+Benchmarking sha256_64kb: Collecting 100 samples in estimated 5.0724 s (126k iterations)
+Benchmarking sha256_64kb: Analyzing
+sha256_64kb             time:   [40.378 µs 40.467 µs 40.534 µs]
+                        change: [-1.8585% -1.0360% -0.2737%] (p = 0.01 < 0.05)
+                        Change within noise threshold.
+Found 18 outliers among 100 measurements (18.00%)
+  13 (13.00%) low severe
+  2 (2.00%) high mild
+  3 (3.00%) high severe
+
+Benchmarking sha256_1mb
+Benchmarking sha256_1mb: Warming up for 3.0000 s
+Benchmarking sha256_1mb: Collecting 100 samples in estimated 6.4946 s (10k iterations)
+Benchmarking sha256_1mb: Analyzing
+sha256_1mb              time:   [634.03 µs 640.98 µs 647.19 µs]
+                        change: [-0.2798% +0.5811% +1.4631%] (p = 0.20 > 0.05)
+                        No change in performance detected.
+Found 21 outliers among 100 measurements (21.00%)
+  10 (10.00%) low severe
+  3 (3.00%) low mild
+  6 (6.00%) high mild
+  2 (2.00%) high severe
+
+Benchmarking aes256gcm_encrypt_64b
+Benchmarking aes256gcm_encrypt_64b: Warming up for 3.0000 s
+Benchmarking aes256gcm_encrypt_64b: Collecting 100 samples in estimated 5.0007 s (12M iterations)
+Benchmarking aes256gcm_encrypt_64b: Analyzing
+aes256gcm_encrypt_64b   time:   [436.90 ns 453.50 ns 467.28 ns]
+                        change: [-3.9154% -0.7216% +2.3754%] (p = 0.67 > 0.05)
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  15 (15.00%) low severe
+  3 (3.00%) high mild
+
+Benchmarking aes256gcm_encrypt_1kb
+Benchmarking aes256gcm_encrypt_1kb: Warming up for 3.0000 s
+Benchmarking aes256gcm_encrypt_1kb: Collecting 100 samples in estimated 5.0066 s (3.2M iterations)
+Benchmarking aes256gcm_encrypt_1kb: Analyzing
+aes256gcm_encrypt_1kb   time:   [1.5697 µs 1.6407 µs 1.7017 µs]
+                        change: [-18.889% -15.079% -11.955%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 19 outliers among 100 measurements (19.00%)
+  19 (19.00%) low mild
+
+Benchmarking aes256gcm_encrypt_64kb
+Benchmarking aes256gcm_encrypt_64kb: Warming up for 3.0000 s
+Benchmarking aes256gcm_encrypt_64kb: Collecting 100 samples in estimated 5.3001 s (61k iterations)
+Benchmarking aes256gcm_encrypt_64kb: Analyzing
+aes256gcm_encrypt_64kb  time:   [79.540 µs 83.506 µs 87.045 µs]
+                        change: [-5.0674% -1.7912% +1.1312%] (p = 0.20 > 0.05)
+                        No change in performance detected.
+Found 16 outliers among 100 measurements (16.00%)
+  13 (13.00%) low severe
+  3 (3.00%) high mild
+
+Benchmarking kdf_single_sha256_derive
+Benchmarking kdf_single_sha256_derive: Warming up for 3.0000 s
+Benchmarking kdf_single_sha256_derive: Collecting 100 samples in estimated 5.0004 s (60M iterations)
+Benchmarking kdf_single_sha256_derive: Analyzing
+kdf_single_sha256_derive
+                        time:   [81.184 ns 82.698 ns 83.961 ns]
+                        change: [-16.820% -15.640% -14.450%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 22 outliers among 100 measurements (22.00%)
+  18 (18.00%) low severe
+  4 (4.00%) high mild
+
+Benchmarking merkle_root_8_leaves
+Benchmarking merkle_root_8_leaves: Warming up for 3.0000 s
+Benchmarking merkle_root_8_leaves: Collecting 100 samples in estimated 5.0023 s (5.7M iterations)
+Benchmarking merkle_root_8_leaves: Analyzing
+merkle_root_8_leaves    time:   [894.84 ns 904.91 ns 911.85 ns]
+                        change: [-2.0064% -1.2688% -0.6237%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 9 outliers among 100 measurements (9.00%)
+  4 (4.00%) low severe
+  4 (4.00%) high mild
+  1 (1.00%) high severe
+
+Benchmarking merkle_root_64_leaves
+Benchmarking merkle_root_64_leaves: Warming up for 3.0000 s
+Benchmarking merkle_root_64_leaves: Collecting 100 samples in estimated 5.0104 s (656k iterations)
+Benchmarking merkle_root_64_leaves: Analyzing
+merkle_root_64_leaves   time:   [7.7015 µs 7.7733 µs 7.8286 µs]
+                        change: [-2.4426% -1.6208% -1.1657%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 4 outliers among 100 measurements (4.00%)
+  4 (4.00%) low severe
+
+Benchmarking merkle_root_256_leaves
+Benchmarking merkle_root_256_leaves: Warming up for 3.0000 s
+Benchmarking merkle_root_256_leaves: Collecting 100 samples in estimated 5.0807 s (162k iterations)
+Benchmarking merkle_root_256_leaves: Analyzing
+merkle_root_256_leaves  time:   [31.505 µs 31.520 µs 31.536 µs]
+                        change: [+0.6898% +1.9518% +3.3948%] (p = 0.00 < 0.05)
+                        Change within noise threshold.
+Found 1 outliers among 100 measurements (1.00%)
+  1 (1.00%) high mild
+
+Benchmarking constant_time_eq_equal
+Benchmarking constant_time_eq_equal: Warming up for 3.0000 s
+Benchmarking constant_time_eq_equal: Collecting 100 samples in estimated 5.0000 s (776M iterations)
+Benchmarking constant_time_eq_equal: Analyzing
+constant_time_eq_equal  time:   [4.8729 ns 5.3208 ns 5.7567 ns]
+                        change: [-22.217% -16.902% -11.875%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+Benchmarking constant_time_eq_not_equal
+Benchmarking constant_time_eq_not_equal: Warming up for 3.0000 s
+Benchmarking constant_time_eq_not_equal: Collecting 100 samples in estimated 5.0000 s (891M iterations)
+Benchmarking constant_time_eq_not_equal: Analyzing
+constant_time_eq_not_equal
+                        time:   [5.6687 ns 6.0425 ns 6.3570 ns]
+                        change: [-0.6973% +2.8554% +6.9259%] (p = 0.14 > 0.05)
+                        No change in performance detected.
+Found 9 outliers among 100 measurements (9.00%)
+  5 (5.00%) low severe
+  3 (3.00%) high mild
+  1 (1.00%) high severe
+

@@ -9,27 +9,27 @@ import (
 
 // Intent represents a transaction intent through its lifecycle.
 type Intent struct {
-	ID              string           `json:"id" gorm:"primaryKey"`
-	TenantID        string           `json:"tenant_id" gorm:"index;not null"`
-	WalletID        string           `json:"wallet_id" gorm:"index;not null"`
-	Destination     string           `json:"destination" gorm:"not null"`
-	Token           string           `json:"token" gorm:"column:token_mint;not null"`
-	Amount          string           `json:"amount" gorm:"type:numeric(78);not null"`
-	Chain           string           `json:"chain" gorm:"default:solana"`
-	Nonce           string           `json:"nonce" gorm:"uniqueIndex;not null"`
-	Creator         string           `json:"creator" gorm:"not null"`
-	Approvers       []string         `json:"approvers" gorm:"type:text[]"`
-	RequiredSigs    int              `json:"required_signatures" gorm:"default:2"`
-	PolicyVersion   string           `json:"policy_version" gorm:"default:v1"`
-	Expiry          time.Time        `json:"expiry" gorm:"not null"`
-	Status          string           `json:"status" gorm:"default:draft;index"`
-	FailureReason   *string          `json:"failure_reason,omitempty"`
-	TXSignature     []byte           `json:"transaction_signature,omitempty"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
-	ApprovedAt      *time.Time       `json:"approved_at,omitempty"`
-	ExecutedAt      *time.Time       `json:"executed_at,omitempty"`
-	ConfirmedAt     *time.Time       `json:"confirmed_at,omitempty"`
+	ID            string     `json:"id" gorm:"primaryKey"`
+	TenantID      string     `json:"tenant_id" gorm:"index;not null"`
+	WalletID      string     `json:"wallet_id" gorm:"index;not null"`
+	Destination   string     `json:"destination" gorm:"not null"`
+	Token         string     `json:"token" gorm:"column:token_mint;not null"`
+	Amount        string     `json:"amount" gorm:"type:numeric(78);not null"`
+	Chain         string     `json:"chain" gorm:"default:solana"`
+	Nonce         string     `json:"nonce" gorm:"uniqueIndex;not null"`
+	Creator       string     `json:"creator" gorm:"not null"`
+	Approvers     []string   `json:"approvers" gorm:"type:text[]"`
+	RequiredSigs  int        `json:"required_signatures" gorm:"default:2"`
+	PolicyVersion string     `json:"policy_version" gorm:"default:v1"`
+	Expiry        time.Time  `json:"expiry" gorm:"not null"`
+	Status        string     `json:"status" gorm:"default:draft;index"`
+	FailureReason *string    `json:"failure_reason,omitempty"`
+	TXSignature   []byte     `json:"transaction_signature,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	ApprovedAt    *time.Time `json:"approved_at,omitempty"`
+	ExecutedAt    *time.Time `json:"executed_at,omitempty"`
+	ConfirmedAt   *time.Time `json:"confirmed_at,omitempty"`
 }
 
 func (Intent) TableName() string { return "intents" }
@@ -68,19 +68,19 @@ func (Wallet) TableName() string { return "wallets" }
 
 // Transaction tracks an on-chain transaction.
 type Transaction struct {
-	ID                string     `json:"id" gorm:"primaryKey"`
-	IntentID          string     `json:"intent_id" gorm:"index;not null"`
-	TenantID          string     `json:"tenant_id" gorm:"index;not null"`
-	WalletID          string     `json:"wallet_id" gorm:"index;not null"`
-	TransactionBytes  []byte     `json:"transaction_bytes"`
-	Blockhash         string     `json:"blockhash"`
-	PriorityFee       int64      `json:"priority_fee"`
-	Status            string     `json:"status" gorm:"default:pending;index"`
-	SubmittedAt       *time.Time `json:"submitted_at,omitempty"`
-	ConfirmedAt       *time.Time `json:"confirmed_at,omitempty"`
-	ConfirmSignature  string     `json:"confirmation_signature,omitempty"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
+	ID               string     `json:"id" gorm:"primaryKey"`
+	IntentID         string     `json:"intent_id" gorm:"index;not null"`
+	TenantID         string     `json:"tenant_id" gorm:"index;not null"`
+	WalletID         string     `json:"wallet_id" gorm:"index;not null"`
+	TransactionBytes []byte     `json:"transaction_bytes"`
+	Blockhash        string     `json:"blockhash"`
+	PriorityFee      int64      `json:"priority_fee"`
+	Status           string     `json:"status" gorm:"default:pending;index"`
+	SubmittedAt      *time.Time `json:"submitted_at,omitempty"`
+	ConfirmedAt      *time.Time `json:"confirmed_at,omitempty"`
+	ConfirmSignature string     `json:"confirmation_signature,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
 }
 
 func (Transaction) TableName() string { return "transactions" }
@@ -103,15 +103,15 @@ func (AuditEvent) TableName() string { return "audit_events" }
 
 // Policy is a configurable rule for a tenant.
 type Policy struct {
-	ID       string          `json:"id" gorm:"primaryKey"`
-	TenantID string          `json:"tenant_id" gorm:"index;not null"`
-	Name     string          `json:"name" gorm:"not null"`
-	RuleType string          `json:"rule_type" gorm:"not null"`
-	Config   json.RawMessage `json:"config" gorm:"type:jsonb"`
-	IsActive bool            `json:"is_active" gorm:"default:true"`
-	Version  string          `json:"version" gorm:"default:v1"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
+	ID        string          `json:"id" gorm:"primaryKey"`
+	TenantID  string          `json:"tenant_id" gorm:"index;not null"`
+	Name      string          `json:"name" gorm:"not null"`
+	RuleType  string          `json:"rule_type" gorm:"not null"`
+	Config    json.RawMessage `json:"config" gorm:"type:jsonb"`
+	IsActive  bool            `json:"is_active" gorm:"default:true"`
+	Version   string          `json:"version" gorm:"default:v1"`
+	CreatedAt time.Time       `json:"created_at"`
+	UpdatedAt time.Time       `json:"updated_at"`
 }
 
 func (Policy) TableName() string { return "policies" }
@@ -177,7 +177,7 @@ func NewIntent(tenantID, walletID, destination, token, chain, creator string, am
 		Chain:       chain,
 		Nonce:       generateNonce(),
 		Creator:     creator,
-		Status:      "draft",
+		Status:      "pending",
 		Expiry:      now.Add(1 * time.Hour),
 		CreatedAt:   now,
 		UpdatedAt:   now,

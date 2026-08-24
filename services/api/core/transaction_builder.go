@@ -66,7 +66,7 @@ func (b *SolanaTransactionBuilder) Build() []byte {
 	}
 	var buf [8]byte
 	for i := 0; i < 8; i++ {
-		buf[i] = byte(b.priorityFee >> (8 * i))
+		buf[i] = byte(b.priorityFee >> (8 * i)) // #nosec G115 -- intentional little-endian byte encoding
 	}
 	h.Write(buf[:])
 	h.Write([]byte(time.Now().UTC().Format(time.RFC3339)))

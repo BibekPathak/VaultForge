@@ -99,6 +99,7 @@ func main() {
 	// Create HTTP router with middleware stack
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(securityHeadersMiddleware(cfg))
 	r.Use(routes.CORSMiddleware())
 	r.Use(routes.RequestIDMiddleware())
 	r.Use(routes.TimeoutMiddleware(30 * time.Second))
@@ -106,7 +107,6 @@ func main() {
 	r.Use(routes.RateLimitMiddleware(rateLimiter))
 	r.Use(routes.MetricsMiddleware(metrics))
 	r.Use(routes.LoggingMiddleware(logger))
-	r.Use(routes.AuthMiddleware())
 
 	// Health check endpoints (no auth required)
 	healthGroup := r.Group("")
@@ -129,9 +129,6 @@ func main() {
 		c.JSON(http.StatusOK, metrics.SnapshotWithDB(poolStats))
 	})
 
-	// Security headers middleware (applied to all routes)
-	r.Use(securityHeadersMiddleware(cfg))
-
 	// Create handler and register routes
 	handler := routes.NewIntentHandler(
 		intentStore,
@@ -146,6 +143,7 @@ func main() {
 	)
 
 	v1 := r.Group("/v1")
+	v1.Use(routes.AuthMiddleware())
 	handler.RegisterRoutes(v1)
 
 	// Configure HTTP server

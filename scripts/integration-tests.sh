@@ -53,7 +53,13 @@ BODY=$(curl -s "$API_URL/health")
 assert_contains "Health response has status=ok" "ok" "$BODY"
 
 STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/ready")
-assert_status "GET /ready returns 200 or 503" "" "$STATUS"
+if [ "$STATUS" = "200" ] || [ "$STATUS" = "503" ]; then
+    echo "  PASS: GET /ready returns 200 or 503 (HTTP $STATUS)"
+    PASS=$((PASS + 1))
+else
+    echo "  FAIL: GET /ready returns 200 or 503 (expected 200 or 503, got $STATUS)"
+    FAIL=$((FAIL + 1))
+fi
 
 # ── Metrics ───────────────────────────────────────────
 echo ""
@@ -65,7 +71,7 @@ assert_status "GET /metrics returns 200" 200 "$STATUS"
 echo ""
 echo "--- Intent Lifecycle ---"
 TENANT="X-Tenant-ID: tenant-1"
-AUTH="Authorization: Bearer test-token"
+AUTH="Authorization: Bearer vaultforge-integration-test-token-123456"
 
 # Create intent
 CREATE_RESP=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/v1/intents" \

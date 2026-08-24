@@ -56,3 +56,5 @@ vaultforge-api
 # But keep these documented:
 # - /target at root (cargo root)
 # - /crates/*/target at each crate level
+# All target/build output dirs at any level
+**/target/

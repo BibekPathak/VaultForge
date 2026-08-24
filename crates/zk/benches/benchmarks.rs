@@ -19,18 +19,18 @@ fn bench_zk_prove(c: &mut Criterion) {
     };
 
     c.bench_function("zk_prove_small_amount", |b| {
-        b.iter(|| Prover::prove(black_box(&private), black_box(&public)))
+        b.iter(|| black_box(Prover::prove(black_box(&private), black_box(&public))))
     });
 
     let public_large = PublicInputs {
-        amount: 99_999,
+        amount: 49_999,
         policy_version: "v1".to_string(),
         intent_id: "bench-intent-2".to_string(),
         wallet_id: "bench-wallet-1".to_string(),
     };
 
     c.bench_function("zk_prove_near_limit", |b| {
-        b.iter(|| Prover::prove(black_box(&private), black_box(&public_large)))
+        b.iter(|| black_box(Prover::prove(black_box(&private), black_box(&public_large))))
     });
 }
 
@@ -50,7 +50,7 @@ fn bench_zk_verify(c: &mut Criterion) {
     let proof = Prover::prove(&private, &public).unwrap();
 
     c.bench_function("zk_verify_proof", |b| {
-        b.iter(|| Verifier::verify(black_box(&proof)))
+        b.iter(|| black_box(Verifier::verify(black_box(&proof))))
     });
 }
 
@@ -69,7 +69,7 @@ fn bench_zk_full_roundtrip(c: &mut Criterion) {
                 wallet_id: "bench-wallet-rt".to_string(),
             };
             let proof = Prover::prove(&private, &public).unwrap();
-            Verifier::verify(&proof).unwrap()
+            black_box(Verifier::verify(&proof).unwrap())
         })
     });
 }

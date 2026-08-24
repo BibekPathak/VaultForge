@@ -8,6 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-08-24
 
 ### Added
+- Real Solana devnet deployment: program built with `cargo-build-sbf` and
+  deployed with `solana program deploy`; program keypair + ID `9J4EcFGBxvMqiYBDN9A1Ke4f73iJckGG6ibhqx5W4aX6`
+- `services/api/cmd/e2e`: real end-to-end devnet harness — builds a real
+  `system.Transfer` transaction with solana-go, signs with a real Ed25519
+  key, submits via the platform `SolanaClient`, and waits for confirmation
+- `scripts/e2e-devnet.sh` driver + `make e2e-devnet` target
+- `SubmitTransaction` now base64-encodes transactions (was hex) with
+  `preflightCommitment` + `maxRetries`
+- `GetRecentBlockhash` now uses `getLatestBlockhash` (deprecated method removed)
+- Auth middleware scoped to `/v1` only — `/health`, `/ready`, `/metrics`,
+  `/v1/version` are public
+- New intents are created in `pending` status (approve/cancel lifecycle now coherent)
+- Criterion benchmarks hardened: `black_box` on inputs AND outputs (prevents
+  DCE/hoisting); fixed `zk_prove_near_limit` using an invalid amount; renamed
+  KDF bench to `kdf_single_sha256_derive`
+- `docs/PERFORMANCE.md` rewritten with **measured** numbers (was estimates)
+  + machine specs + reproduction commands; raw logs in `benchmarks/results/`
+- README rewritten for ~2-minute architecture comprehension
+
+### Security (from full verification)
+- Go toolchain pinned to 1.25.13 (0 stdlib vulnerabilities); upgraded
+  `golang.org/x/net` v0.55.0, `x/text` v0.41.0, `pgx/v5` v5.9.2
+- gosec: fixed 7 findings (G115 LE-encoding + G104 unhandled errors)
+- cargo-audit: removed unused `solana-program`/`solana-client` from
+  `crates/transaction` (eliminated 5 vulnerabilities, 493→74 deps)
+- Secrets scan now excludes `target/` build artifacts
+
+### Fixed
+- `/health`/`/ready`/`/metrics`/`/v1/version` required auth (middleware order)
+- `approve` rejected newly-created intents (draft→pending lifecycle gap)
+- `getRecentBlockhash` deprecation broke readiness probe
+- Integration test used a <16-char bearer token (auth rejected it)
+- Seed script used wrong column (`token` → `token_mint`)
+- Devnet deploy now works despite Anchor workspace detection conflict
+- SBF build pinned `blake3`/`zeroize`/`zeroize_derive` for rustc 1.84 (edition2024)
+
+### Added
 - Reconciler now polls Solana RPC for real transaction confirmation
 - Idempotency key support via `X-Idempotency-Key` header on `POST /v1/intents`
 - Input validation wired in `CreateIntent` handler

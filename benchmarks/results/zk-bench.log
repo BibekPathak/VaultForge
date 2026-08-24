@@ -1,0 +1,49 @@
+   Compiling vaultforge-zk v1.0.0 (/home/BibekP/vaultforge/crates/zk)
+    Finished `bench` profile [optimized] target(s) in 1.39s
+     Running benches/benchmarks.rs (target/release/deps/benchmarks-2acc4654638374c4)
+Gnuplot not found, using plotters backend
+Benchmarking zk_prove_small_amount
+Benchmarking zk_prove_small_amount: Warming up for 3.0000 s
+Benchmarking zk_prove_small_amount: Collecting 100 samples in estimated 5.0064 s (3.9M iterations)
+Benchmarking zk_prove_small_amount: Analyzing
+zk_prove_small_amount   time:   [1.2679 µs 1.2808 µs 1.2910 µs]
+                        change: [-1.3411% -0.6132% -0.1252%] (p = 0.02 < 0.05)
+                        Change within noise threshold.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) low severe
+  5 (5.00%) high mild
+  4 (4.00%) high severe
+
+Benchmarking zk_prove_near_limit
+Benchmarking zk_prove_near_limit: Warming up for 3.0000 s
+Benchmarking zk_prove_near_limit: Collecting 100 samples in estimated 5.0007 s (3.9M iterations)
+Benchmarking zk_prove_near_limit: Analyzing
+zk_prove_near_limit     time:   [1.2816 µs 1.2877 µs 1.2923 µs]
+                        change: [+3501.2% +3536.6% +3565.8%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 6 outliers among 100 measurements (6.00%)
+  6 (6.00%) low severe
+
+Benchmarking zk_verify_proof
+Benchmarking zk_verify_proof: Warming up for 3.0000 s
+Benchmarking zk_verify_proof: Collecting 100 samples in estimated 5.0039 s (6.4M iterations)
+Benchmarking zk_verify_proof: Analyzing
+zk_verify_proof         time:   [769.92 ns 775.02 ns 778.84 ns]
+                        change: [-4.7799% -3.3759% -1.8312%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  5 (5.00%) low severe
+  2 (2.00%) high mild
+
+Benchmarking zk_full_prove_verify
+Benchmarking zk_full_prove_verify: Warming up for 3.0000 s
+Benchmarking zk_full_prove_verify: Collecting 100 samples in estimated 5.0003 s (2.4M iterations)
+Benchmarking zk_full_prove_verify: Analyzing
+zk_full_prove_verify    time:   [2.0456 µs 2.0559 µs 2.0631 µs]
+                        change: [-1.6890% -1.3894% -1.1601%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 6 outliers among 100 measurements (6.00%)
+  2 (2.00%) low severe
+  2 (2.00%) low mild
+  2 (2.00%) high mild
+

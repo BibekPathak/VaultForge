@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -74,24 +75,27 @@ type signatureStatusResponse struct {
 }
 
 type signatureStatus struct {
-	Signature        string `json:"signature"`
-	ConfirmationStatus string `json:"confirmationStatus"`
-	Err              interface{} `json:"err"`
+	Signature          string      `json:"signature"`
+	ConfirmationStatus string      `json:"confirmationStatus"`
+	Err                interface{} `json:"err"`
 }
 
 // SubmitTransaction submits a signed transaction to Solana with exponential backoff retry.
 func (c *SolanaClient) SubmitTransaction(txBytes []byte) (*SubmitResult, error) {
-	txHex := fmt.Sprintf("%x", txBytes)
+	// Solana's sendTransaction expects a base64-encoded serialized transaction.
+	txB64 := base64.StdEncoding.EncodeToString(txBytes)
 
 	req := rpcRequest{
 		Jsonrpc: "2.0",
 		ID:      1,
 		Method:  "sendTransaction",
 		Params: []interface{}{
-			txHex,
+			txB64,
 			map[string]string{
-				"encoding":  "base64",
-				"commitment": c.commitment,
+				"encoding":            "base64",
+				"commitment":          c.commitment,
+				"preflightCommitment": c.commitment,
+				"maxRetries":          "5",
 			},
 		},
 	}
@@ -207,7 +211,7 @@ func (c *SolanaClient) GetRecentBlockhash() (string, error) {
 	req := rpcRequest{
 		Jsonrpc: "2.0",
 		ID:      1,
-		Method:  "getRecentBlockhash",
+		Method:  "getLatestBlockhash",
 		Params: []interface{}{
 			map[string]string{
 				"commitment": c.commitment,

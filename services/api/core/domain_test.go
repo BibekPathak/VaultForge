@@ -80,8 +80,8 @@ func TestNewIntent_Defaults(t *testing.T) {
 	if intent.TenantID != "tenant-1" {
 		t.Errorf("expected TenantID=tenant-1, got %s", intent.TenantID)
 	}
-	if intent.Status != "draft" {
-		t.Errorf("expected status=draft, got %s", intent.Status)
+	if intent.Status != "pending" {
+		t.Errorf("expected status=pending, got %s", intent.Status)
 	}
 	if intent.Amount != "1000" {
 		t.Errorf("expected amount=1000, got %s", intent.Amount)

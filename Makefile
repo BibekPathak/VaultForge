@@ -122,6 +122,9 @@ deploy-devnet: build-solana ## Deploy program to Solana devnet
 create-wallets: ## Create test wallets for devnet
 	./scripts/create-test-wallets.sh
 
+e2e-devnet: ## Execute a real SOL transfer on devnet (builds tx with solana-go)
+	./scripts/e2e-devnet.sh
+
 # ── Operations ──────────────────────────────────────────
 
 security-scan: ## Run security audit (cargo-audit + gosec + govulncheck)

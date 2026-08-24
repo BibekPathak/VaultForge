@@ -57,7 +57,9 @@ for pattern in \
     "password=.*[A-Za-z0-9]{8}" \
     "BEGIN RSA PRIVATE KEY" \
     "BEGIN EC PRIVATE KEY"; do
-    if grep -r --include="*.go" --include="*.rs" --include="*.toml" --include="*.yaml" --include="*.yml" --include="*.env" "$pattern" . 2>/dev/null | grep -v "_test.go" | grep -v "mocks.go" | grep -v ".env.example" | grep -v "test" | grep -v "dummy" | grep -v "example"; then
+    if grep -r --exclude-dir=target --exclude-dir=node_modules --exclude-dir=.git \
+        --include="*.go" --include="*.rs" --include="*.toml" --include="*.yaml" --include="*.yml" --include="*.env" "$pattern" . 2>/dev/null \
+        | grep -v "_test.go" | grep -v "mocks.go" | grep -v ".env.example" | grep -v "test" | grep -v "dummy" | grep -v "example"; then
         SECRETS_FOUND=1
     fi
 done

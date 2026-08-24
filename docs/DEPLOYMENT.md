@@ -2,38 +2,35 @@
 
 ## Prerequisites
 
-- [Solana CLI](https://docs.solanalabs.com/cli/install) v1.18+
-- [Anchor CLI](https://www.anchor-lang.com/docs/installation) v0.30+
+- [Solana CLI](https://docs.solanalabs.com/cli/install) v1.18+ (includes `cargo-build-sbf`)
 - [Docker](https://docs.docker.com/get-docker/) (for PostgreSQL)
 - [Go 1.25](https://go.dev/dl/) (for API service)
 - [Rust](https://rustup.rs/) (for crate builds)
 
+> **Note on Anchor CLI:** The repo uses Anchor for the on-chain program source, but
+> deployment builds with `cargo-build-sbf` and deploys with `solana program deploy`.
+> This avoids `anchor build`'s workspace detection, which conflicts with the
+> standalone Rust crates in `./crates`.
+
 ## Quick Start
 
 ```bash
-# 1. Install Solana CLI and Anchor
-sh -c "$(curl -sSfL https://release.anza.xyz/v1.18.26/install)"
-cargo install --git https://github.com/coral-xyz/anchor avm --locked
-avm install 0.30.1
-avm use 0.30.1
-
-# 2. Configure for devnet
+# 1. Configure for devnet
 solana config set --url devnet
 
-# 3. Create deployer wallet
-solana-keygen new --no-bip39-passphrase -o ~/.config/solana/vaultforge-deployer.json
-
-# 4. Fund deployer wallet
-solana airdrop 5 --url devnet
-
-# 5. Deploy to devnet
+# 2. Deploy to devnet (creates + funds deployer wallet automatically)
 ./scripts/deploy-devnet.sh
 
-# 6. Start API service
+# 3. Start API service
 make docker-up
+make seed-db
+cd services/api && go run . &
 
-# 7. Run integration tests
-./scripts/run-integration-tests.sh
+# 4. Run integration tests (API + Solana connectivity)
+./scripts/integration-tests.sh
+
+# 5. Execute a REAL devnet SOL transfer (solana-go, real signature + confirmation)
+./scripts/e2e-devnet.sh
 ```
 
 ## Architecture
@@ -59,18 +56,54 @@ The Anchor program `vault_policy` handles on-chain policy verification:
 3. **Verify Intent** — On-chain verification that intent satisfies policy
 4. **Record Signer** — On-chain attestation of MPC signing participation
 
+`./scripts/deploy-devnet.sh`:
+- Creates/funds `~/.config/solana/vaultforge-deployer.json` (payer)
+- Ensures the program keypair exists at `target/deploy/vault_policy-keypair.json`
+- Builds with `cargo-build-sbf --tools-version v1.52`
+- Deploys with `solana program deploy <so> --program-id <keypair>`
+- Verifies with `solana program show <PROGRAM_ID>`
+
 ### Program Commands
 
 ```bash
-# Build
-anchor build
+# Build (SBF toolchain; newer platform-tools for edition2024 support)
+(cd programs/vault_policy && cargo-build-sbf --tools-version v1.52 --manifest-path Cargo.toml)
 
 # Deploy
-anchor deploy --provider.cluster devnet
+solana program deploy programs/vault_policy/target/deploy/vault_policy.so \
+  --program-id target/deploy/vault_policy-keypair.json \
+  --keypair ~/.config/solana/vaultforge-deployer.json --url devnet
 
 # Verify
-solana program show <PROGRAM_ID> --url devnet
+solana program show 9J4EcFGBxvMqiYBDN9A1Ke4f73iJckGG6ibhqx5W4aX6 --url devnet
 ```
+
+### Program ID
+
+The deployed program ID is `9J4EcFGBxvMqiYBDN9A1Ke4f73iJckGG6ibhqx5W4aX6`,
+derived from `target/deploy/vault_policy-keypair.json` and set in
+`declare_id!()` (`programs/vault_policy/src/lib.rs`) and `[programs.devnet]`
+(`Anchor.toml`).
+
+## Real End-to-End Transaction
+
+`./scripts/e2e-devnet.sh` executes a real devnet SOL transfer:
+
+1. Creates/funds a sender wallet (`.test-wallets/treasury.json`)
+2. Creates a recipient wallet (`.test-wallets/recipient.json`)
+3. Builds a real `system.Transfer` transaction with **solana-go**
+4. Signs with the real Ed25519 private key
+5. Submits through the platform's `SolanaClient` (base64-encoded, exponential backoff)
+6. Polls for on-chain confirmation (`WaitForConfirmation`)
+7. Prints the signature + explorer URL and verifies the recipient's balance
+
+```bash
+./scripts/e2e-devnet.sh            # or: make e2e-devnet
+```
+
+> The API's intent **approve** flow is fully real (policy + ZK + audit). The
+> **execute** path's MPC signer is still a hash-based simulation; the e2e harness
+> performs the real on-chain signing/submission directly with a real keypair.
 
 ## Environment Variables
 
