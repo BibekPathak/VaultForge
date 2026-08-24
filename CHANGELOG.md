@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker image hardened: distroless base image, nonroot user, trimmed binary, OCI labels
 - CI pipeline: cargo-audit, govulncheck, Trivy Docker scan, gofmt check, coverage artifact
 - Production readiness checklist document
+- Release guide with step-by-step instructions, rollback procedure, and version matrix
 
 ### Changed
 - Auth middleware now validates Authorization header format and sanitizes tenant IDs
