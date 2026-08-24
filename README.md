@@ -2,6 +2,8 @@
 
 MPC-threshold institutional treasury and settlement platform for Solana.
 
+**Version: 1.0.0** | [Changelog](CHANGELOG.md) | [Documentation](docs/)
+
 ## Overview
 
 VaultForge provides institutional-grade custody with:

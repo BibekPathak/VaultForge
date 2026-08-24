@@ -416,7 +416,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-crypto"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -434,7 +434,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-policy"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "log",
  "serde",
@@ -445,7 +445,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-zk"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "hex",
  "log",

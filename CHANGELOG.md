@@ -5,7 +5,7 @@ All notable changes to VaultForge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-08-24
 
 ### Added
 - Reconciler now polls Solana RPC for real transaction confirmation
@@ -38,12 +38,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API usage examples with curl commands for all endpoints
 - Troubleshooting & FAQ guide
 - Contributing guide with code style, PR templates, and security checklist
-- Updated README with full documentation index and architecture diagram
 - PostgreSQL backup script with pg_dump, compression, integrity check, and retention
 - Disaster recovery runbook (backup, restore, failover, incident response, communication templates)
 - Release automation CI (tag → test → Docker build/push → GitHub Release)
-- Grafana dashboard JSON (11 panels: request rate, latency, errors, intents, ZK, MPC, DB pool, goroutines, memory, uptime, Solana RPC)
-- Prometheus alert rules (20 rules across API, DB, Solana, business logic, infrastructure)
+- Grafana dashboard JSON (11 panels)
+- Prometheus alert rules (20 rules)
 - `/v1/version` endpoint exposing build version, environment, Go runtime, and platform
 - VERSION file for semantic versioning
 - API key validation with format, length, and character checks
@@ -53,20 +52,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Production JWT_SECRET validation (required in production, min 32 chars)
 - Graceful restart script (drains in-flight requests, verifies health)
 - Service status script (health, readiness, metrics, version, DB, disk — text or JSON)
-- Docker image hardened: distroless base, nonroot user, trimmed binary, OCI labels
+- Docker image hardened: distroless base image, nonroot user, trimmed binary, OCI labels
 - CI pipeline: cargo-audit, govulncheck, Trivy Docker scan, gofmt check, coverage artifact
-- Makefile targets: test-race, test-coverage, test-coverage-open, docker-scan, security-scan-all, verify
 - Production readiness checklist document
 
 ### Changed
 - Auth middleware now validates Authorization header format and sanitizes tenant IDs
 - Config validation enforces JWT_SECRET in production and minimum secret length
 - CORS middleware supports configurable origins (not just wildcard)
-- Startup log now includes version, Go runtime version
+- Startup log includes version and Go runtime version
 - Server header set to "VaultForge" on all responses
-- Docker image uses distroless base instead of Alpine (smaller, more secure)
-- CI tests run with race detector and upload coverage artifact
-- Security scan expanded to include Docker image vulnerability scanning
+- Docker image uses distroless base instead of Alpine
+- All crate versions bumped to 1.0.0
+- Helm chart version bumped to 1.0.0
+- docker-compose.yml: read_only root filesystem, no-new-privileges, resource limits
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff

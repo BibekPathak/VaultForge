@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,6 +15,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
 
   api:
     build:
@@ -30,12 +33,24 @@ services:
       DATABASE_URL: "host=postgres user=vaultforge password=vaultforge dbname=vaultforge port=5432 sslmode=disable"
       SOLANA_RPC_URL: "https://api.devnet.solana.com"
       VAULTFORGE_ENV: "development"
-      LOG_LEVEL: "debug"
+      LOG_LEVEL: "info"
       SHUTDOWN_TIMEOUT: "10s"
+      MAX_BODY_BYTES: "10485760"
+      CORS_ORIGINS: "*"
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
 
 volumes:
   pgdata:

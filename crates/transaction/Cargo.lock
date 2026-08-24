@@ -4883,7 +4883,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-crypto"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -4901,7 +4901,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-solana"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "log",
  "serde",
@@ -4912,7 +4912,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-transaction"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "log",
  "serde",
@@ -4927,7 +4927,7 @@ dependencies = [
 
 [[package]]
 name = "vaultforge-types"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "rand 0.8.7",
  "serde",
