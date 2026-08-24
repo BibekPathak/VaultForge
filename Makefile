@@ -109,6 +109,21 @@ helm-lint: ## Lint Helm chart
 seed-db: ## Seed database with test data
 	./scripts/seed-db.sh
 
+# ── Testing ────────────────────────────────────────────
+
+load-test: ## Run load tests (requires: hey)
+	./scripts/load-test.sh
+
+integration-test: ## Run integration tests against devnet
+	./scripts/integration-tests.sh
+
+bench: ## Run Rust benchmarks (requires nightly)
+	@for crate in crypto zk; do \
+		echo "=== Benchmarks: $$crate ==="; \
+		cd crates/$$crate && cargo bench 2>&1; \
+		cd ../..; \
+	done
+
 # ── Clean ──────────────────────────────────────────────
 
 clean: ## Remove build artifacts

@@ -28,7 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenAPI 3.0.3 spec for all API endpoints
 - Helm chart for Kubernetes deployment (Deployment, Service, Ingress, HPA, ConfigMap, Secrets)
 - Security scanning script (cargo-audit + gosec + govulncheck + secrets scan)
-- Makefile targets: security-scan, helm-template, helm-lint, seed-db
+- Load testing script using `hey` (9 endpoint scenarios + sustained mixed workload)
+- Rust benchmark suite for crypto primitives (SHA-256, AES-GCM, KDF, Merkle)
+- Rust benchmark suite for ZK policy (prove, verify, full roundtrip)
+- Integration test script for API lifecycle + Solana devnet connectivity
+- Performance baseline documentation with latency targets and scaling thresholds
+- Makefile targets: load-test, integration-test, bench, security-scan, helm-template, helm-lint, seed-db
 
 ### Changed
 - Upgraded webhook retry from linear to exponential backoff
